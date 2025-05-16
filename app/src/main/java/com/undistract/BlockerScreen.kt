@@ -41,6 +41,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+//import androidx.compose.material3.Dialog
+import androidx.compose.ui.window.Dialog
+import androidx.compose.material3.Divider
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -58,6 +68,8 @@ fun BlockerScreen(
     val nfcWriteSuccess by viewModel.nfcWriteSuccess.collectAsState(initial = false)
     val nfcWriteDialogShown by viewModel.nfcWriteDialogShown.collectAsState(initial = false)
     val showScanTagAlert by viewModel.showScanTagAlert.collectAsState(initial = false)
+    val showTagsList = remember { mutableStateOf(false) }
+    val writtenTags by viewModel.writtenTags.collectAsState()
 
 
     // Configure NFC reading
@@ -119,6 +131,15 @@ fun BlockerScreen(
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_add_24),
                             contentDescription = "Create Tag"
+                        )
+                    }
+
+                    IconButton(
+                        onClick = { showTagsList.value = true }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.stack_hexagon_24),
+                            contentDescription = "Show Tags"
                         )
                     }
                 }
@@ -249,7 +270,10 @@ fun BlockerScreen(
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.onCreateTagConfirmed()
-                    nfcHelper.startWrite("BROKE-IS-GREAT") { success ->
+                    nfcHelper.startWrite("UNDISTRACT-IS-GREAT") { success ->
+                        if (success) {
+                            viewModel.saveTag("UNDISTRACT-IS-GREAT") // Record successful write
+                        }
                         viewModel.onTagWriteResult(success)
                     }
                 }) {
@@ -279,6 +303,72 @@ fun BlockerScreen(
             }
         )
     }
+
+    if (showTagsList.value) {
+        TagsList(
+            tags = writtenTags,
+            onClose = { showTagsList.value = false }
+        )
+    }
+}
+
+
+@Composable
+fun TagsList(tags: List<NfcTag>, onClose: () -> Unit) {
+    Dialog(onDismissRequest = onClose) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    "Your NFC Tags",
+                    style = MaterialTheme.typography.titleLarge
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (tags.isEmpty()) {
+                    Text("No tags have been written yet")
+                } else {
+                    LazyColumn {
+                        items(tags) { tag ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp)
+                            ) {
+                                Column {
+                                    Text(tag.payload)
+                                    Text(
+                                        "Created: ${formatDate(tag.createdAt)}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                            Divider()
+                        }
+                    }
+                }
+
+                TextButton(
+                    onClick = onClose,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Close")
+                }
+            }
+        }
+    }
+}
+
+private fun formatDate(timestamp: Long): String {
+    val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
+    return sdf.format(Date(timestamp))
 }
 
 
