@@ -1,17 +1,27 @@
 package com.undistract
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import com.undistract.UndistractApp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlin.apply
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 class BlockerViewModel(application: Application) : AndroidViewModel(application) {
+    private val _writtenTags = MutableStateFlow<List<NfcTag>>(emptyList())
+    val writtenTags = _writtenTags.asStateFlow()
+
+    // Store tags in SharedPreferences for persistence
+    private val prefs = application.getSharedPreferences("nfc_tags", Context.MODE_PRIVATE)
+
     private val appBlocker = UndistractApp.appBlocker
     private val profileManager = UndistractApp.profileManager
 
-    private val tagPhrase = "BROKE-IS-GREAT"
+    private val tagPhrase = "UNDISTRACT-IS-GREAT"
 
     private val _showWrongTagAlert = MutableStateFlow(false)
     val showWrongTagAlert = _showWrongTagAlert.asStateFlow()
@@ -28,9 +38,57 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
     val isBlocking = appBlocker.isBlocking
     val currentProfile = profileManager.currentProfile
 
-    // In BlockerViewModel.kt
     private val _showScanTagAlert = MutableStateFlow(false)
     val showScanTagAlert: StateFlow<Boolean> = _showScanTagAlert.asStateFlow()
+
+    init {
+        // Load saved tags on init
+        android.util.Log.d("BlockerViewModel", "Initializing ViewModel")
+        loadSavedTags()
+    }
+
+    private fun loadSavedTags() {
+        try {
+            val tagsJson = prefs.getString("nfc_tags", null)
+            if (tagsJson == null || tagsJson.isEmpty()) {
+                _writtenTags.value = emptyList()
+                return
+            }
+
+            android.util.Log.d("BlockerViewModel", "Loading tags JSON: $tagsJson")
+
+            val jsonArray = org.json.JSONArray(tagsJson)
+            val tagsList = mutableListOf<NfcTag>()
+
+            for (i in 0 until jsonArray.length()) {
+                val tagJson = jsonArray.getJSONObject(i)
+                tagsList.add(NfcTag.fromJson(tagJson))
+            }
+
+            _writtenTags.value = tagsList
+            android.util.Log.d("BlockerViewModel", "Loaded tags count: ${_writtenTags.value.size}")
+
+        } catch (e: Exception) {
+            android.util.Log.e("BlockerViewModel", "Error loading saved tags", e)
+            e.printStackTrace() // Adds full stack trace to logcat
+            _writtenTags.value = emptyList()
+        }
+    }
+
+    fun saveTag(payload: String) {
+        val newTag = NfcTag(payload = payload)
+        val updatedTags = _writtenTags.value.toMutableList().apply { add(newTag) }
+        _writtenTags.value = updatedTags
+
+        // Persist to SharedPreferences using JSONArray
+        val jsonArray = org.json.JSONArray()
+        updatedTags.forEach { tag ->
+            jsonArray.put(tag.toJson())
+        }
+
+        prefs.edit().putString("nfc_tags", jsonArray.toString()).apply()
+        android.util.Log.d("BlockerViewModel", "Saved new tag: $payload, total tags: ${updatedTags.size}")
+    }
 
     fun showScanTagAlert() {
         _showScanTagAlert.value = true

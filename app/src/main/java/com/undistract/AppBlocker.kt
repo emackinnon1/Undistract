@@ -1,6 +1,7 @@
 package com.undistract
 
 import android.app.AppOpsManager
+import android.os.Build
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -11,7 +12,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class AppBlocker(private val context: Context) {
-    // StateFlow to replace @Published properties
     private val _isBlocking = MutableStateFlow(false)
     val isBlocking: StateFlow<Boolean> = _isBlocking.asStateFlow()
 
@@ -29,11 +29,15 @@ class AppBlocker(private val context: Context) {
     fun checkAuthorization() {
         // Check usage stats permission
         val appOpsManager = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode = appOpsManager.checkOpNoThrow(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            Process.myUid(),
-            context.packageName
-        )
+        val uid = Process.myUid()
+        val packageName = context.packageName
+
+        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            appOpsManager.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, uid, packageName)
+        } else {
+            @Suppress("DEPRECATION")
+            appOpsManager.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, uid, packageName)
+        }
 
         // Check overlay permission
         val canDrawOverlays = Settings.canDrawOverlays(context)

@@ -19,9 +19,42 @@ class MainActivity : ComponentActivity() {
     // Create a MutableStateFlow to publish new intents
     val newIntentFlow = MutableStateFlow<Intent?>(null)
 
+//    override fun onCreate(savedInstanceState: Bundle?) {
+//        super.onCreate(savedInstanceState)
+//        nfcHelper = NfcHelper(this)
+//        setContent {
+//            UndistractTheme {
+//                Surface(
+//                    modifier = Modifier.fillMaxSize(),
+//                    color = MaterialTheme.colorScheme.background
+//                ) {
+//                    BlockerScreen(nfcHelper = nfcHelper, newIntentFlow = newIntentFlow)
+//                }
+//            }
+//        }
+////        setContent {
+////            UndistractTheme {
+////                Surface(
+////                    modifier = Modifier.fillMaxSize(),
+////                    color = MaterialTheme.colorScheme.background
+////                ) {
+////                    Text("Hello World")
+////                }
+////            }
+////        }
+//    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // Publish new intent to the flow
+        newIntentFlow.value = intent
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         nfcHelper = NfcHelper(this)
+
         setContent {
             UndistractTheme {
                 Surface(
@@ -32,45 +65,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-//        setContent {
-//            UndistractTheme {
-//                Surface(
-//                    modifier = Modifier.fillMaxSize(),
-//                    color = MaterialTheme.colorScheme.background
-//                ) {
-//                    Text("Hello World")
-//                }
-//            }
-//        }
-    }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        // Publish new intent to the flow
-        newIntentFlow.value = intent
+        // Process the initial intent if it's an NFC intent
+        intent?.let {
+            nfcHelper.handleIntent(it)
+        }
     }
-
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//
-//        nfcHelper = NfcHelper(this)
-//
-//        setContent {
-//            UndistractTheme {
-//                Surface(
-//                    modifier = Modifier.fillMaxSize(),
-//                    color = MaterialTheme.colorScheme.background
-//                ) {
-//                    BlockerScreen(nfcHelper)
-//                }
-//            }
-//        }
-//
-//        // Process the initial intent if it's an NFC intent
-//        intent?.let {
-//            nfcHelper.handleIntent(it)
-//        }
-//    }
 
     override fun onResume() {
         super.onResume()
