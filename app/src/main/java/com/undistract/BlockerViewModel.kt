@@ -32,6 +32,7 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
     private val tagPhrase = "UNDISTRACT-IS-GREAT"
     private val _isBlocking = MutableStateFlow(false)
 
+
     private val _showWrongTagAlert = MutableStateFlow(false)
     val showWrongTagAlert = _showWrongTagAlert.asStateFlow()
 
@@ -117,32 +118,64 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
 //        }
 //    }
 
+//    fun scanTag(payload: String) {
+//        viewModelScope.launch {
+//            dismissScanTagAlert()
+//
+//            // Check if it's a valid Undistract tag
+//            if (payload.startsWith("UNDISTRACT")) {
+//                // Toggle blocking state
+//                val newBlockingState = !_isBlocking.value
+//                println("New blocking state: $newBlockingState")
+//                _isBlocking.value = newBlockingState
+//
+//                // If we're now blocking, activate blocking for the selected profile
+//                if (newBlockingState) {
+//                    // First ensure the accessibility service is enabled
+//                    ensureAccessibilityServiceEnabled(getApplication<Application>())
+//
+//                    // Use currentProfile instead of selectedProfile
+//                    val profile = profileManager.currentProfile.value
+//
+//                    profile?.let {
+//                        // Access the app packages using the correct property name from your Profile class
+//                        val appList = it.appPackageNames
+//                        startBlockingApps(appList)
+//                    }
+//                } else {
+//                    // Stop blocking all apps
+//                    stopBlockingApps()
+//                }
+//            } else {
+//                _showWrongTagAlert.value = true
+//            }
+//        }
+//    }
     fun scanTag(payload: String) {
         viewModelScope.launch {
             dismissScanTagAlert()
 
             // Check if it's a valid Undistract tag
             if (payload.startsWith("UNDISTRACT")) {
-                // Toggle blocking state
-                val newBlockingState = !_isBlocking.value
-                _isBlocking.value = newBlockingState
+                // Get current profile
+                val profile = profileManager.currentProfile.value
+                println("VALID TAG DETECTED FOR PROFILE: $profile")
 
-                // If we're now blocking, activate blocking for the selected profile
-                if (newBlockingState) {
-                    // First ensure the accessibility service is enabled
-                    ensureAccessibilityServiceEnabled(getApplication<Application>())
+                // Toggle blocking state using appBlocker
+                profile?.let {
+                    val newBlockingState = !appBlocker.isBlocking.value
+                    println("New blocking state: $newBlockingState")
 
-                    // Use currentProfile instead of selectedProfile
-                    val profile = profileManager.currentProfile.value
+                    if (newBlockingState) {
+                        // First ensure the accessibility service is enabled
+                        ensureAccessibilityServiceEnabled(getApplication<Application>())
 
-                    profile?.let {
-                        // Access the app packages using the correct property name from your Profile class
-                        val appList = it.appPackageNames
-                        startBlockingApps(appList)
+                        // Start blocking with current profile
+                        startBlockingApps(it.appPackageNames)
+                    } else {
+                        // Stop blocking
+                        stopBlockingApps()
                     }
-                } else {
-                    // Stop blocking all apps
-                    stopBlockingApps()
                 }
             } else {
                 _showWrongTagAlert.value = true
@@ -160,6 +193,7 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
             putStringArrayListExtra(BlockerService.EXTRA_APP_PACKAGES, ArrayList(appPackages))
         }
         UndistractApp.instance.startService(intent)
+        appBlocker.setBlockingState(true)
     }
 
     private fun stopBlockingApps() {
@@ -168,6 +202,8 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
             action = BlockerService.ACTION_STOP_BLOCKING
         }
         UndistractApp.instance.startService(intent)
+        appBlocker.setBlockingState(false)
+        println("stopBlockingApps blocking state: ${appBlocker.isBlocking}")
     }
 
     fun showCreateTagAlert() {

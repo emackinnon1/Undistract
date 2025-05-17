@@ -13,7 +13,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-//import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -74,6 +73,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalDensity
 
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun BlockerScreen(
@@ -96,7 +96,6 @@ fun BlockerScreen(
     val profileManager = UndistractApp.profileManager
     val errorMessage by profileManager.errorMessage.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-
 
 
     // Configure NFC reading
@@ -231,23 +230,15 @@ fun BlockerScreen(
                             },
                             modifier = Modifier.size(120.dp)
                         ) {
-//                            Icon(
-//                                painter = painterResource(
-//                                    id = if (blocking) R.drawable.undistract_plain else R.drawable.undistract_plain
-//                                ),
-//                                contentDescription = if (blocking) "Unblock" else "Block",
-//                                modifier = Modifier.size(100.dp),
-//                                tint = if (blocking) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.tertiary
-//                            )
                             PulsingGlowEffect {
                                 Icon(
                                     painter = painterResource(
-                                        id = if (blocking) R.drawable.undistract_plain else R.drawable.undistract_plain
+                                        id = R.drawable.undistract_plain
                                     ),
-                                    contentDescription = if (blocking) "Unblock" else "Block",
+                                    contentDescription = if (blocking) "Unblock Apps" else "Block Apps",
                                     modifier = Modifier.size(100.dp),
                                     tint = if (blocking)
-                                        MaterialTheme.colorScheme.errorContainer
+                                        Color.Red
                                     else
                                         MaterialTheme.colorScheme.tertiary
                                 )
