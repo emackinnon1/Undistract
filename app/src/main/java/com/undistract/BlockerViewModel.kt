@@ -132,10 +132,6 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun startBlockingApps(appPackages: List<String>) {
-        // Implement app blocking using UsageStatsManager, AppOpsManager,
-        // or a custom AccessibilityService depending on your approach
-
-        // This could be launching a service or using system APIs
         val intent = Intent(UndistractApp.instance, BlockerService::class.java).apply {
             action = BlockerService.ACTION_START_BLOCKING
             putStringArrayListExtra(BlockerService.EXTRA_APP_PACKAGES, ArrayList(appPackages))
