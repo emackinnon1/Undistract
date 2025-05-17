@@ -132,6 +132,9 @@ fun ProfilesPicker(
                     icon = icon
                 )
                 editingProfile = null
+            },
+            onDelete = { profileId ->
+                profileManager.deleteProfile(profileId)
             }
         )
     }
@@ -245,7 +248,8 @@ fun ProfileCellBase(
 fun ProfileFormDialog(
     profile: Profile? = null,
     onDismiss: () -> Unit,
-    onSave: (name: String, icon: String, apps: List<String>) -> Unit
+    onSave: (name: String, icon: String, apps: List<String>) -> Unit,
+    onDelete: ((String) -> Unit)? = null
 ) {
     var profileName by remember { mutableStateOf(profile?.name ?: "") }
     var profileIcon by remember { mutableStateOf(profile?.icon ?: "baseline_block_24") }
@@ -336,7 +340,9 @@ fun ProfileFormDialog(
                     if (isEditMode && profile?.isDefault == false) {
                         TextButton(
                             onClick = {
-                                // TODO: Add delete functionality
+                                profile?.let {
+                                    onDelete?.invoke(it.id)  // Call onDelete with profile ID
+                                }
                                 onDismiss()
                             },
                             colors = ButtonDefaults.textButtonColors(

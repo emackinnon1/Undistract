@@ -13,7 +13,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+//import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -51,6 +51,15 @@ import java.util.Date
 import java.util.Locale
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -71,11 +80,23 @@ fun BlockerScreen(
     val showTagsList = remember { mutableStateOf(false) }
     val writtenTags by viewModel.writtenTags.collectAsState()
 
+    val profileManager = UndistractApp.profileManager
+    val errorMessage by profileManager.errorMessage.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+
 
     // Configure NFC reading
     LaunchedEffect(Unit) {
         nfcHelper.startScan { payload ->
             viewModel.scanTag(payload)
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            profileManager.clearErrorMessage()
         }
     }
 
@@ -120,6 +141,7 @@ fun BlockerScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Undistract") },

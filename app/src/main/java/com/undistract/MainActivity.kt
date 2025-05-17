@@ -20,28 +20,16 @@ class MainActivity : ComponentActivity() {
     val newIntentFlow = MutableStateFlow<Intent?>(null)
 
 //    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        nfcHelper = NfcHelper(this)
 //        setContent {
 //            UndistractTheme {
 //                Surface(
 //                    modifier = Modifier.fillMaxSize(),
 //                    color = MaterialTheme.colorScheme.background
 //                ) {
-//                    BlockerScreen(nfcHelper = nfcHelper, newIntentFlow = newIntentFlow)
+//                    Text("Hello World")
 //                }
 //            }
 //        }
-////        setContent {
-////            UndistractTheme {
-////                Surface(
-////                    modifier = Modifier.fillMaxSize(),
-////                    color = MaterialTheme.colorScheme.background
-////                ) {
-////                    Text("Hello World")
-////                }
-////            }
-////        }
 //    }
 
     override fun onNewIntent(intent: Intent) {
@@ -82,9 +70,4 @@ class MainActivity : ComponentActivity() {
         nfcHelper.disableForegroundDispatch()
     }
 
-//    override fun onNewIntent(intent: Intent) {
-//        super.onNewIntent(intent)
-//        setIntent(intent)
-//        nfcHelper.handleIntent(intent)
-//    }
 }
