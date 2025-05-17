@@ -22,6 +22,10 @@ class ProfileManager(private val context: Context) {
     private val _currentProfile = MutableStateFlow<Profile?>(null)
     val currentProfile: StateFlow<Profile?> = _currentProfile.asStateFlow()
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+
     init {
         loadProfiles()
         ensureDefaultProfile()
@@ -132,7 +136,10 @@ class ProfileManager(private val context: Context) {
                 _currentProfileId.value = updatedProfiles.firstOrNull()?.id
             }
 
+
             saveProfiles()
+        } else {
+            _errorMessage.value = "You must have at least one profile"
         }
     }
 
@@ -160,5 +167,9 @@ class ProfileManager(private val context: Context) {
                 ?: _profiles.value.firstOrNull()?.id
             saveProfiles()
         }
+    }
+
+    fun clearErrorMessage() {
+        _errorMessage.value = null
     }
 }
