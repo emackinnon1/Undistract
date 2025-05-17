@@ -13,7 +13,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-//import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -74,6 +73,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalDensity
 
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun BlockerScreen(
@@ -98,7 +98,6 @@ fun BlockerScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
 
-
     // Configure NFC reading
     LaunchedEffect(Unit) {
         nfcHelper.startScan { payload ->
@@ -106,11 +105,11 @@ fun BlockerScreen(
         }
     }
 
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            profileManager.clearErrorMessage()
-        }
+    errorMessage?.let { message ->
+        ErrorMessageDialog(
+            errorMessage = message,
+            onDismiss = { profileManager.clearErrorMessage() }
+        )
     }
 
     val backgroundColor = if (isBlocking) {
@@ -231,23 +230,15 @@ fun BlockerScreen(
                             },
                             modifier = Modifier.size(120.dp)
                         ) {
-//                            Icon(
-//                                painter = painterResource(
-//                                    id = if (blocking) R.drawable.undistract_plain else R.drawable.undistract_plain
-//                                ),
-//                                contentDescription = if (blocking) "Unblock" else "Block",
-//                                modifier = Modifier.size(100.dp),
-//                                tint = if (blocking) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.tertiary
-//                            )
                             PulsingGlowEffect {
                                 Icon(
                                     painter = painterResource(
-                                        id = if (blocking) R.drawable.undistract_plain else R.drawable.undistract_plain
+                                        id = R.drawable.undistract_plain
                                     ),
-                                    contentDescription = if (blocking) "Unblock" else "Block",
+                                    contentDescription = if (blocking) "Unblock Apps" else "Block Apps",
                                     modifier = Modifier.size(100.dp),
                                     tint = if (blocking)
-                                        MaterialTheme.colorScheme.errorContainer
+                                        Color.Red
                                     else
                                         MaterialTheme.colorScheme.tertiary
                                 )
@@ -507,5 +498,54 @@ fun GlowingBorder(content: @Composable () -> Unit) {
             }
     ) {
         content()
+    }
+}
+
+@Composable
+fun ErrorMessageDialog(
+    errorMessage: String,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        GlowingBorder {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "Error",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        errorMessage,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Box(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                        PulsingGlowEffect {
+                            Button(
+                                onClick = onDismiss,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
+                            ) {
+                                Text("OK", color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

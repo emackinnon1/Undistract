@@ -11,4 +11,5 @@
     <string name="delete">Delete</string>
     <string name="close">Close</string>
     <string name="select_an_icon">Select an Icon</string>
+    <string name="accessibility_service_description">Undistract uses this service to prevent access to apps when they are blocked.</string>
 </resources>

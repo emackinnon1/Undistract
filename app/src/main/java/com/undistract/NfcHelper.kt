@@ -59,6 +59,18 @@ class NfcHelper(private val activity: Activity) {
         }
     }
 
+    /**
+     * Checks if the given intent is an NFC-related intent
+     * @param intent The intent to check
+     * @return true if the intent is NFC-related, false otherwise
+     */
+    fun isNfcIntent(intent: Intent): Boolean {
+        val action = intent.action
+        return action == NfcAdapter.ACTION_NDEF_DISCOVERED ||
+               action == NfcAdapter.ACTION_TECH_DISCOVERED ||
+               action == NfcAdapter.ACTION_TAG_DISCOVERED
+    }
+
     private fun readFromTag(tag: Tag, intent: Intent) {
         try {
             // First try to get NDEF message directly from intent

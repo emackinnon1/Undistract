@@ -10,6 +10,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlin.apply
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+import android.content.Intent
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.view.accessibility.AccessibilityManager
+import android.provider.Settings
+import android.widget.Toast
+
 
 class BlockerViewModel(application: Application) : AndroidViewModel(application) {
     private val _writtenTags = MutableStateFlow<List<NfcTag>>(emptyList())
@@ -22,6 +30,8 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
     private val profileManager = UndistractApp.profileManager
 
     private val tagPhrase = "UNDISTRACT-IS-GREAT"
+    private val _isBlocking = MutableStateFlow(false)
+
 
     private val _showWrongTagAlert = MutableStateFlow(false)
     val showWrongTagAlert = _showWrongTagAlert.asStateFlow()
@@ -98,14 +108,102 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
         _showScanTagAlert.value = false
     }
 
+//    fun scanTag(payload: String) {
+//        if (payload == tagPhrase) {
+//            profileManager.currentProfile.value?.let { profile ->
+//                appBlocker.toggleBlocking(profile)
+//            }
+//        } else {
+//            _showWrongTagAlert.value = true
+//        }
+//    }
+
+//    fun scanTag(payload: String) {
+//        viewModelScope.launch {
+//            dismissScanTagAlert()
+//
+//            // Check if it's a valid Undistract tag
+//            if (payload.startsWith("UNDISTRACT")) {
+//                // Toggle blocking state
+//                val newBlockingState = !_isBlocking.value
+//                println("New blocking state: $newBlockingState")
+//                _isBlocking.value = newBlockingState
+//
+//                // If we're now blocking, activate blocking for the selected profile
+//                if (newBlockingState) {
+//                    // First ensure the accessibility service is enabled
+//                    ensureAccessibilityServiceEnabled(getApplication<Application>())
+//
+//                    // Use currentProfile instead of selectedProfile
+//                    val profile = profileManager.currentProfile.value
+//
+//                    profile?.let {
+//                        // Access the app packages using the correct property name from your Profile class
+//                        val appList = it.appPackageNames
+//                        startBlockingApps(appList)
+//                    }
+//                } else {
+//                    // Stop blocking all apps
+//                    stopBlockingApps()
+//                }
+//            } else {
+//                _showWrongTagAlert.value = true
+//            }
+//        }
+//    }
     fun scanTag(payload: String) {
-        if (payload == tagPhrase) {
-            profileManager.currentProfile.value?.let { profile ->
-                appBlocker.toggleBlocking(profile)
+        viewModelScope.launch {
+            dismissScanTagAlert()
+
+            // Check if it's a valid Undistract tag
+            if (payload.startsWith("UNDISTRACT")) {
+                // Get current profile
+                val profile = profileManager.currentProfile.value
+                println("VALID TAG DETECTED FOR PROFILE: $profile")
+
+                // Toggle blocking state using appBlocker
+                profile?.let {
+                    val newBlockingState = !appBlocker.isBlocking.value
+                    println("New blocking state: $newBlockingState")
+
+                    if (newBlockingState) {
+                        // First ensure the accessibility service is enabled
+                        ensureAccessibilityServiceEnabled(getApplication<Application>())
+
+                        // Start blocking with current profile
+                        startBlockingApps(it.appPackageNames)
+                    } else {
+                        // Stop blocking
+                        stopBlockingApps()
+                    }
+                }
+            } else {
+                _showWrongTagAlert.value = true
             }
-        } else {
-            _showWrongTagAlert.value = true
         }
+    }
+
+    private fun startBlockingApps(appPackages: List<String>) {
+        // Implement app blocking using UsageStatsManager, AppOpsManager,
+        // or a custom AccessibilityService depending on your approach
+
+        // This could be launching a service or using system APIs
+        val intent = Intent(UndistractApp.instance, BlockerService::class.java).apply {
+            action = BlockerService.ACTION_START_BLOCKING
+            putStringArrayListExtra(BlockerService.EXTRA_APP_PACKAGES, ArrayList(appPackages))
+        }
+        UndistractApp.instance.startService(intent)
+        appBlocker.setBlockingState(true)
+    }
+
+    private fun stopBlockingApps() {
+        // Stop the blocking service or mechanism
+        val intent = Intent(UndistractApp.instance, BlockerService::class.java).apply {
+            action = BlockerService.ACTION_STOP_BLOCKING
+        }
+        UndistractApp.instance.startService(intent)
+        appBlocker.setBlockingState(false)
+        println("stopBlockingApps blocking state: ${appBlocker.isBlocking}")
     }
 
     fun showCreateTagAlert() {
@@ -133,4 +231,7 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
     fun dismissNfcWriteSuccessAlert() {
         _nfcWriteSuccess.value = false
     }
+
+
 }
+

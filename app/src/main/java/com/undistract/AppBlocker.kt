@@ -71,6 +71,11 @@ class AppBlocker(private val context: Context) {
         applyBlockingSettings(profile)
     }
 
+    fun setBlockingState(isBlocking: Boolean) {
+        _isBlocking.value = isBlocking
+        saveBlockingState()
+    }
+
     fun applyBlockingSettings(profile: Profile) {
         if (_isBlocking.value) {
             println("Blocking ${profile.appPackageNames.size} apps")

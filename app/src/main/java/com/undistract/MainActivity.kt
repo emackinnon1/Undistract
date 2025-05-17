@@ -8,10 +8,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import com.undistract.ui.theme.UndistractTheme
-
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.view.accessibility.AccessibilityManager
+import android.provider.Settings
+import android.widget.Toast
+import android.content.Context
 
 class MainActivity : ComponentActivity() {
     private lateinit var nfcHelper: NfcHelper
@@ -19,27 +22,12 @@ class MainActivity : ComponentActivity() {
     // Create a MutableStateFlow to publish new intents
     val newIntentFlow = MutableStateFlow<Intent?>(null)
 
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        setContent {
-//            UndistractTheme {
-//                Surface(
-//                    modifier = Modifier.fillMaxSize(),
-//                    color = MaterialTheme.colorScheme.background
-//                ) {
-//                    Text("Hello World")
-//                }
-//            }
-//        }
-//    }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        // Publish new intent to the flow
-        newIntentFlow.value = intent
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (!isAccessibilityServiceEnabled(this)) {
+            promptEnableAccessibilityService()
+        }
 
         nfcHelper = NfcHelper(this)
 
@@ -56,8 +44,16 @@ class MainActivity : ComponentActivity() {
 
         // Process the initial intent if it's an NFC intent
         intent?.let {
-            nfcHelper.handleIntent(it)
+            if (nfcHelper.isNfcIntent(it)) {
+                nfcHelper.handleIntent(it)
+            }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent) // Store the intent for later use
+        newIntentFlow.value = intent
     }
 
     override fun onResume() {
@@ -70,4 +66,23 @@ class MainActivity : ComponentActivity() {
         nfcHelper.disableForegroundDispatch()
     }
 
+    override fun onStop() {
+        super.onStop()
+        // Ensure any resources are properly released
+    }
+
+    // Helper method to check if accessibility service is enabled
+    private fun isAccessibilityServiceEnabled(context: Context): Boolean {
+        val accessibilityManager = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+        val enabledServices = accessibilityManager.getEnabledAccessibilityServiceList(
+            AccessibilityServiceInfo.FEEDBACK_ALL_MASK
+        )
+
+        return enabledServices.any { it.id.contains("com.undistract/.AppBlockerAccessibilityService") }
+    }
+
+    private fun promptEnableAccessibilityService() {
+        Toast.makeText(this, "Please enable the accessibility service", Toast.LENGTH_LONG).show()
+        startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+    }
 }
