@@ -19,24 +19,25 @@ import androidx.compose.ui.graphics.Color
 
 // Dark colors
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF90CAF9),           // Light blue
-    onPrimary = Color.Black,
-    primaryContainer = Color(0xFF1E1E1E),  // Dark container
-    onPrimaryContainer = Color(0xFFE0E0E0), // Light text
-    secondary = Color(0xFF80DEEA),         // Light cyan
-    onSecondary = Color.Black,
-    secondaryContainer = Color(0xFF252525), // Dark container
-    onSecondaryContainer = Color(0xFFE0E0E0), // Light text
-    tertiary = Color(0xFF9FA8DA),          // Light indigo
-    onTertiary = Color.Black,
-    background = Color(0xFF121212),        // Dark background
+    primary = Color(0xFF6200EA),           // Deep electric purple
+    onPrimary = Color(0xFFD6CDFF),         // Light purple for contrast
+    primaryContainer = Color(0xFF0A0A14),  // Very dark blue-black
+    onPrimaryContainer = Color(0xFF9D4DFF), // Bright electric purple
+    secondary = Color(0xFF8C38FF),         // Electric purple (main accent)
+    onSecondary = Color(0xFFE0CDFF),       // Light purple
+    secondaryContainer = Color(0xFF12101A), // Dark purple-black
+    onSecondaryContainer = Color(0xFFBB86FC), // Lighter purple
+    tertiary = Color(0xFFA346FF),          // Neon electric purple
+    onTertiary = Color(0xFF000000),        // Black text on bright tertiary
+    background = Color(0xFF050510),        // Nearly black with slight purple tint
     onBackground = Color(0xFFE0E0E0),      // Light text
-    surface = Color(0xFF1D1D1D),           // Dark surface
-    onSurface = Color(0xFFE0E0E0),         // Light text
-    surfaceVariant = Color(0xFF2D2D2D),    // Slightly lighter surface
-    onSurfaceVariant = Color(0xFFD0D0D0),  // Slightly dimmer light text
-    error = Color(0xFFEF9A9A),             // Light red
-    onError = Color.Black
+    surface = Color(0xFF0E0B19),           // Dark surface with purple undertone
+    onSurface = Color(0xFFE9DAFF),         // Light purple-white text
+    surfaceVariant = Color(0xFF1A1625),    // Slightly lighter purple-dark
+    onSurfaceVariant = Color(0xFFCBB8E8),  // Soft light purple text
+    error = Color(0xFFB035FF),             // Neon purple error
+    onError = Color(0xFF000000),           // Black text on error
+    errorContainer = Color(0xFF230F35)     // Dark purple error container
 )
 
 private val LightColorScheme = lightColorScheme(
