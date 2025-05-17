@@ -220,11 +220,11 @@ fun BlockerScreen(
                         ) {
                             Icon(
                                 painter = painterResource(
-                                    id = if (blocking) R.drawable.baseline_block_24 else R.drawable.baseline_check_circle_24
+                                    id = if (blocking) R.drawable.undistract_plain else R.drawable.undistract_plain
                                 ),
                                 contentDescription = if (blocking) "Unblock" else "Block",
                                 modifier = Modifier.size(100.dp),
-                                tint = if (blocking) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                                tint = if (blocking) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.tertiary
                             )
                         }
                     }
