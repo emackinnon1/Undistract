@@ -60,6 +60,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.platform.LocalDensity
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -218,14 +231,27 @@ fun BlockerScreen(
                             },
                             modifier = Modifier.size(120.dp)
                         ) {
-                            Icon(
-                                painter = painterResource(
-                                    id = if (blocking) R.drawable.baseline_block_24 else R.drawable.baseline_check_circle_24
-                                ),
-                                contentDescription = if (blocking) "Unblock" else "Block",
-                                modifier = Modifier.size(100.dp),
-                                tint = if (blocking) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                            )
+//                            Icon(
+//                                painter = painterResource(
+//                                    id = if (blocking) R.drawable.undistract_plain else R.drawable.undistract_plain
+//                                ),
+//                                contentDescription = if (blocking) "Unblock" else "Block",
+//                                modifier = Modifier.size(100.dp),
+//                                tint = if (blocking) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.tertiary
+//                            )
+                            PulsingGlowEffect {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (blocking) R.drawable.undistract_plain else R.drawable.undistract_plain
+                                    ),
+                                    contentDescription = if (blocking) "Unblock" else "Block",
+                                    modifier = Modifier.size(100.dp),
+                                    tint = if (blocking)
+                                        MaterialTheme.colorScheme.errorContainer
+                                    else
+                                        MaterialTheme.colorScheme.tertiary
+                                )
+                            }
                         }
                     }
                 }
@@ -394,3 +420,92 @@ private fun formatDate(timestamp: Long): String {
 }
 
 
+@Composable
+fun GlowingIconButton(
+    onClick: () -> Unit,
+    icon: @Composable () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .shadow(
+                elevation = 20.dp,
+                shape = CircleShape,
+                spotColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f),
+                ambientColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.6f)
+            )
+            .background(
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shape = CircleShape
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        IconButton(
+            onClick = onClick,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            icon()
+        }
+    }
+}
+
+@Composable
+fun PulsingGlowEffect(content: @Composable () -> Unit) {
+    val infiniteTransition = rememberInfiniteTransition(label = "glow")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 0.9f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ), label = "glow"
+    )
+
+    Box {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .shadow(
+                    elevation = 24.dp,
+                    spotColor = MaterialTheme.colorScheme.secondary.copy(alpha = glowAlpha),
+                    shape = CircleShape
+                )
+        )
+        content()
+    }
+}
+
+@Composable
+fun GlowingBorder(content: @Composable () -> Unit) {
+    val density = LocalDensity.current
+
+    Box(
+        modifier = Modifier
+            .drawBehind {
+                val strokeWidth = with(density) { 2.dp.toPx() }
+                val cornerRadius = with(density) { 8.dp.toPx() }
+                val borderColor = Color(0xFFA346FF) // Your neon electric purple
+
+                drawRoundRect(
+                    color = borderColor,
+                    style = Stroke(width = strokeWidth),
+                    cornerRadius = CornerRadius(cornerRadius),
+                    alpha = 0.7f
+                )
+                drawRoundRect(
+                    color = borderColor,
+                    style = Stroke(width = strokeWidth * 2),
+                    cornerRadius = CornerRadius(cornerRadius),
+                    alpha = 0.4f
+                )
+                drawRoundRect(
+                    color = borderColor,
+                    style = Stroke(width = strokeWidth * 3),
+                    cornerRadius = CornerRadius(cornerRadius),
+                    alpha = 0.2f
+                )
+            }
+    ) {
+        content()
+    }
+}
