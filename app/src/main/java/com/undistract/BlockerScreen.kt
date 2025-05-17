@@ -106,11 +106,11 @@ fun BlockerScreen(
         }
     }
 
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            profileManager.clearErrorMessage()
-        }
+    errorMessage?.let { message ->
+        ErrorMessageDialog(
+            errorMessage = message,
+            onDismiss = { profileManager.clearErrorMessage() }
+        )
     }
 
     val backgroundColor = if (isBlocking) {
@@ -507,5 +507,54 @@ fun GlowingBorder(content: @Composable () -> Unit) {
             }
     ) {
         content()
+    }
+}
+
+@Composable
+fun ErrorMessageDialog(
+    errorMessage: String,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        GlowingBorder {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "Error",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        errorMessage,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Box(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                        PulsingGlowEffect {
+                            Button(
+                                onClick = onDismiss,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
+                            ) {
+                                Text("OK", color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
