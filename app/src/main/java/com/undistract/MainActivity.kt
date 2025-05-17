@@ -11,6 +11,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import com.undistract.ui.theme.UndistractTheme
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.view.accessibility.AccessibilityManager
+import android.provider.Settings
+import android.widget.Toast
+import android.content.Context
 
 
 class MainActivity : ComponentActivity() {
@@ -40,6 +45,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ensureAccessibilityServiceEnabled(this)
 
         nfcHelper = NfcHelper(this)
 
