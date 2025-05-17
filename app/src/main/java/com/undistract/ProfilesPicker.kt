@@ -415,7 +415,6 @@ fun IconPickerDialog(
         "baseline_settings_24",
         "baseline_star_24",
         "baseline_work_24"
-//        "undistract__logo"
     )
 
     AlertDialog(

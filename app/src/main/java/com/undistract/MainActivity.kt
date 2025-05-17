@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        // Ensure any resources are properly released
+        // TODO: Ensure any resources are properly released
     }
 
     // Helper method to check if accessibility service is enabled

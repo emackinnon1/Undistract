@@ -1,6 +1,5 @@
 package com.undistract
 
-import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
