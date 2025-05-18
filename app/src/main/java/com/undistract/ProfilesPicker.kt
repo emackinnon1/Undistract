@@ -35,6 +35,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import kotlin.collections.addAll
+import kotlin.text.clear
 
 
 @Composable
@@ -480,6 +482,7 @@ fun AppSelectionDialog(
 ) {
     val context = LocalContext.current
     val packageManager = context.packageManager
+    val profileManager = UndistractApp.profileManager
 
     val selectedAppsMutable = remember {
         mutableStateListOf<String>().apply { addAll(selectedApps) }
@@ -491,6 +494,10 @@ fun AppSelectionDialog(
         }
 
         packageManager.queryIntentActivities(intent, 0)
+            .filter { resolveInfo ->
+                // Filter out Undistract app
+                resolveInfo.activityInfo.applicationInfo.packageName != "com.undistract"
+            }
             .map { resolveInfo ->
                 val appInfo = resolveInfo.activityInfo.applicationInfo
                 AppInfo(
@@ -502,15 +509,61 @@ fun AppSelectionDialog(
             .sortedBy { it.appName }
     }
 
+    // Track if all apps are selected
+    val allAppsSelected = selectedAppsMutable.size == installedApps.size
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.select_apps_to_block, 0)) },
+        title = { Text(stringResource(R.string.select_apps_to_block, selectedAppsMutable.size)) },
         text = {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 400.dp)
             ) {
+                // Select All option
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (allAppsSelected) {
+                                    selectedAppsMutable.clear()
+                                } else {
+                                    selectedAppsMutable.clear()
+                                    selectedAppsMutable.addAll(installedApps.map { it.packageName })
+                                }
+                            }
+                            .padding(vertical = 8.dp, horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Select All Apps",
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 8.dp)
+                        )
+
+                        Checkbox(
+                            checked = allAppsSelected,
+                            onCheckedChange = { checked ->
+                                if (checked) {
+                                    selectedAppsMutable.clear()
+                                    selectedAppsMutable.addAll(installedApps.map { it.packageName })
+                                } else {
+                                    selectedAppsMutable.clear()
+                                }
+                            }
+                        )
+                    }
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+
+                // App list
                 items(installedApps) { appInfo ->
                     val isSelected = selectedAppsMutable.contains(appInfo.packageName)
 

@@ -154,6 +154,11 @@ class ProfileManager(private val context: Context) {
         saveProfiles()
     }
 
+    fun getFilteredAppList(appList: List<AppInfo>): List<AppInfo> {
+        val packageName = "com.undistract" // Your app's package name
+        return appList.filter { it.packageName != packageName }
+    }
+
     fun getProfileById(id: String): Profile? {
         return _profiles.value.find { it.id == id }
     }
