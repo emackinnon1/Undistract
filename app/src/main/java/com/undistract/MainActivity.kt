@@ -30,11 +30,11 @@ class MainActivity : ComponentActivity() {
         }
 
         // Check if we're coming from BlockedAppActivity
-        if (intent.getBooleanExtra("came_from_blocked_app", false)) {
-            showMessage("App is blocked by Undistract")
-        } else {
-            showMessage("Hold phone near NFC tag to read")
-        }
+//        if (intent.getBooleanExtra("came_from_blocked_app", false)) {
+//            showMessage("App is blocked by Undistract")
+//        } else {
+//            showMessage("Hold phone near NFC tag to read")
+//        }
 
 
         nfcHelper = NfcHelper(this)
@@ -66,12 +66,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-
-        // Only use nfcHelper if we're not showing the blocked app layout
-        if (!intent.getBooleanExtra("came_from_blocked_app", false)) {
-            // Your existing nfcHelper code here
-            nfcHelper.enableForegroundDispatch()
-        }
+        nfcHelper.enableForegroundDispatch()
     }
 
     override fun onPause() {

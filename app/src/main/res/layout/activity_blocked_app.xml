@@ -27,7 +27,7 @@
                 android:layout_height="48dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_block"
-                android:tint="#FF0000" />
+                app:tint="#FF0000" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -45,6 +45,13 @@
                 android:layout_marginTop="8dp"
                 android:gravity="center"
                 android:text="This app is currently blocked by Undistract.\nScan your tag to unblock." />
+            <Button
+                android:id="@+id/close_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="16dp"
+                android:text="Close" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>
