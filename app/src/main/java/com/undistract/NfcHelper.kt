@@ -175,7 +175,6 @@ class NfcHelper(private val activity: Activity) {
         isWriteMode = false
         textToWrite = null
         onTagReadListener = onRead
-        showMessage("Hold phone near NFC tag to read")
     }
 
     fun startWrite(text: String, onWrite: (Boolean) -> Unit) {
