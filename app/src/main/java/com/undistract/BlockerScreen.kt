@@ -20,10 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleEventObserver
-import com.undistract.R
-import com.undistract.UndistractApp
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.foundation.lazy.LazyColumn

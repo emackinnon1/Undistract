@@ -29,6 +29,14 @@ class MainActivity : ComponentActivity() {
             promptEnableAccessibilityService()
         }
 
+        // Check if we're coming from BlockedAppActivity
+//        if (intent.getBooleanExtra("came_from_blocked_app", false)) {
+//            showMessage("App is blocked by Undistract")
+//        } else {
+//            showMessage("Hold phone near NFC tag to read")
+//        }
+
+
         nfcHelper = NfcHelper(this)
 
         setContent {
@@ -84,5 +92,9 @@ class MainActivity : ComponentActivity() {
     private fun promptEnableAccessibilityService() {
         Toast.makeText(this, "Please enable the accessibility service", Toast.LENGTH_LONG).show()
         startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+    }
+
+    private fun showMessage(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }
