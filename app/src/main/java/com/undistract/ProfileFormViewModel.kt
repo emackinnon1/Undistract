@@ -2,23 +2,21 @@ package com.undistract
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.undistract.data.models.Profile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import java.util.UUID
 
 class ProfileFormViewModel(
-    private val profileManager: ProfileManager,
+    private val profileManagerRepository: ProfileManagerRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     // Get profile ID from navigation arguments, if any
     private val _profileId = MutableStateFlow<String?>(savedStateHandle["profileId"])
     val profileId: StateFlow<String?> = _profileId.asStateFlow()
-    private val profile = profileId.value?.let { profileManager.getProfileById(it) }
+    private val profile = profileId.value?.let { profileManagerRepository.getProfileById(it) }
 
     // UI state
     private val _profileName = MutableStateFlow(profile?.name ?: "")
@@ -49,7 +47,7 @@ class ProfileFormViewModel(
     // Save profile
     fun saveProfile(onComplete: () -> Unit) {
         if (profile != null) {
-            profileManager.updateProfile(
+            profileManagerRepository.updateProfile(
                 id = profile.id,
                 name = _profileName.value,
                 appPackageNames = _selectedApps.value,
@@ -62,14 +60,14 @@ class ProfileFormViewModel(
                 appPackageNames = _selectedApps.value,
                 icon = _profileIcon.value
             )
-            profileManager.addProfile(newProfile)
+            profileManagerRepository.addProfile(newProfile)
         }
         onComplete()
     }
 
     fun deleteProfile(onComplete: () -> Unit) {
         profile?.let {
-            profileManager.deleteProfile(it.id)
+            profileManagerRepository.deleteProfile(it.id)
             onComplete()
         }
     }

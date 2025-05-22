@@ -36,7 +36,7 @@
             android:name=".BlockedAppActivity"
             android:theme="@style/Theme.Undistract.Translucent"
             android:exported="false" />
-        <service android:name=".AppBlockingService" />
+        <service android:name=".services.AppBlockingService" />
         <service
             android:name=".BlockerService"
             android:enabled="true"

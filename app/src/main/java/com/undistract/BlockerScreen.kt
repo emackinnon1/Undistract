@@ -227,7 +227,7 @@ fun BlockerScreen(
                     enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                     exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
                 ) {
-                    ProfilesPicker(profileManager = UndistractApp.profileManager)
+                    ProfilesPicker(profileManagerRepository = UndistractApp.profileManager)
                 }
             }
         }

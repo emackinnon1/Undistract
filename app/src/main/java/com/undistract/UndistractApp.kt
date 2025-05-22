@@ -6,14 +6,14 @@ class UndistractApp : Application() {
     lateinit var appBlocker: AppBlocker
         private set
 
-    lateinit var profileManager: ProfileManager
+    lateinit var profileManagerRepository: ProfileManagerRepository
         private set
 
     override fun onCreate() {
         super.onCreate()
         instance = this
         appBlocker = AppBlocker(this)
-        profileManager = ProfileManager(this)
+        profileManagerRepository = ProfileManagerRepository(this)
     }
 
     companion object {
@@ -21,6 +21,6 @@ class UndistractApp : Application() {
             private set
 
         val appBlocker get() = instance.appBlocker
-        val profileManager get() = instance.profileManager
+        val profileManager get() = instance.profileManagerRepository
     }
 }
