@@ -36,12 +36,12 @@
             android:name=".BlockedAppActivity"
             android:theme="@style/Theme.Undistract.Translucent"
             android:exported="false" />
-        <service android:name=".services.AppBlockingService" />
+        <service android:name=".services.blocking.AppBlockingService" />
         <service
             android:name=".BlockerService"
             android:enabled="true"
             android:exported="false" />
-        <service android:name=".services.AppBlockerAccessibilityService"
+        <service android:name=".AppBlockerAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="false">
             <intent-filter>

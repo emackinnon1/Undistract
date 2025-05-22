@@ -37,18 +37,16 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.undistract.app.UndistractApp
 import com.undistract.data.models.Profile
-import com.undistract.data.repositories.ProfileManager
-import kotlin.collections.addAll
-import kotlin.text.clear
+import com.undistract.data.repositories.ProfileManagerRepository
 
 
 @Composable
 fun ProfilesPicker(
-    profileManager: ProfileManager,
+    profileManagerRepository: ProfileManagerRepository,
     modifier: Modifier = Modifier
 ) {
-    val profiles by profileManager.profiles.collectAsState()
-    val currentProfileId by profileManager.currentProfileId.collectAsState()
+    val profiles by profileManagerRepository.profiles.collectAsState()
+    val currentProfileId by profileManagerRepository.currentProfileId.collectAsState()
 
     var showAddProfileView by remember { mutableStateOf(false) }
     var editingProfile by remember { mutableStateOf<Profile?>(null) }
@@ -77,7 +75,7 @@ fun ProfilesPicker(
                 ProfileCell(
                     profile = profile,
                     isSelected = profile.id == currentProfileId,
-                    onClick = { profileManager.setCurrentProfile(profile.id) },
+                    onClick = { profileManagerRepository.setCurrentProfile(profile.id) },
                     onLongClick = { editingProfile = profile }
                 )
             }
@@ -118,7 +116,7 @@ fun ProfilesPicker(
                     appPackageNames = apps,
                     icon = icon
                 )
-                profileManager.addProfile(newProfile)
+                profileManagerRepository.addProfile(newProfile)
                 showAddProfileView = false
             }
         )
@@ -130,7 +128,7 @@ fun ProfilesPicker(
             profile = profile,
             onDismiss = { editingProfile = null },
             onSave = { name, icon, apps ->
-                profileManager.updateProfile(
+                profileManagerRepository.updateProfile(
                     id = profile.id,
                     name = name,
                     appPackageNames = apps,
@@ -139,7 +137,7 @@ fun ProfilesPicker(
                 editingProfile = null
             },
             onDelete = { profileId ->
-                profileManager.deleteProfile(profileId)
+                profileManagerRepository.deleteProfile(profileId)
             }
         )
     }

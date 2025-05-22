@@ -1,4 +1,4 @@
-package com.undistract.services.accessibility
+package com.undistract
 
 import android.accessibilityservice.AccessibilityService
 import android.content.BroadcastReceiver
@@ -12,7 +12,6 @@ import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.widget.TextView
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.undistract.R
 
 class AppBlockerAccessibilityService : AccessibilityService() {
     companion object {
