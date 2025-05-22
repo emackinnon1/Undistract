@@ -1,15 +1,15 @@
-package com.undistract
+package com.undistract.data.repositories
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.undistract.data.repositories.ProfileManager
+import com.undistract.data.models.Profile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import java.util.UUID
 
-class ProfileFormViewModel(
+class ProfileRepository(
     private val profileManager: ProfileManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -26,7 +26,8 @@ class ProfileFormViewModel(
     private val _profileIcon = MutableStateFlow(profile?.icon ?: "baseline_block_24")
     val profileIcon = _profileIcon.asStateFlow()
 
-    private val _selectedApps = MutableStateFlow<List<String>>(profile?.appPackageNames ?: emptyList())
+    private val _selectedApps =
+        MutableStateFlow<List<String>>(profile?.appPackageNames ?: emptyList())
     val selectedApps = _selectedApps.asStateFlow()
 
     val isEditing: Boolean

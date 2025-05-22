@@ -1,5 +1,6 @@
-package com.undistract
+package com.undistract.data.models
 
+import android.util.Log
 import org.json.JSONObject
 import java.util.UUID
 
@@ -26,7 +27,7 @@ data class NfcTag(
                 NfcTag(id, payload, createdAt)
             } catch (e: Exception) {
                 // Log the error
-                android.util.Log.e("NfcTag", "Error parsing JSON: ${e.message}")
+                Log.e("NfcTag", "Error parsing JSON: ${e.message}")
                 // Return a default tag if parsing fails
                 NfcTag(payload = "error_parsing")
             }

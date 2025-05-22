@@ -1,12 +1,17 @@
-package com.undistract
+package com.undistract.services
 
 import android.app.Service
 import android.app.usage.UsageStatsManager
-import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import android.view.WindowManager
-import kotlinx.coroutines.*
+import com.undistract.MainActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlin.coroutines.coroutineContext
 
 class AppBlockingService : Service() {
@@ -22,8 +27,8 @@ class AppBlockingService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        usageStatsManager = getSystemService(USAGE_STATS_SERVICE) as UsageStatsManager
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

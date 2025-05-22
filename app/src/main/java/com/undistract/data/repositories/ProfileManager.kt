@@ -1,8 +1,10 @@
-package com.undistract
+package com.undistract.data.repositories
 
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import com.undistract.AppInfo
+import com.undistract.data.models.Profile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,7 +41,7 @@ class ProfileManager(private val context: Context) {
                 val profilesList = mutableListOf<Profile>()
 
                 for (i in 0 until jsonArray.length()) {
-                    profilesList.add(Profile.fromJson(jsonArray.getJSONObject(i)))
+                    profilesList.add(Profile.Companion.fromJson(jsonArray.getJSONObject(i)))
                 }
 
                 _profiles.value = profilesList

@@ -3,13 +3,14 @@ package com.undistract
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
-import com.undistract.UndistractApp
+import com.undistract.app.UndistractApp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import android.content.Intent
+import com.undistract.data.models.NfcTag
 
 class BlockerViewModel(application: Application) : AndroidViewModel(application) {
     private val _writtenTags = MutableStateFlow<List<NfcTag>>(emptyList())
