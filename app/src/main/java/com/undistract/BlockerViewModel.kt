@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import android.content.Intent
+import com.undistract.services.AppBlockerAccessibilityService
 
 class BlockerViewModel(application: Application) : AndroidViewModel(application) {
     private val _writtenTags = MutableStateFlow<List<NfcTag>>(emptyList())
@@ -116,7 +117,7 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
 
                     if (newBlockingState) {
                         // First ensure the accessibility service is enabled
-                        ensureAccessibilityServiceEnabled(getApplication<Application>())
+                        AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(getApplication<Application>())
 
                         // Start blocking with current profile
                         startBlockingApps(it.appPackageNames)
