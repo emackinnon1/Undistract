@@ -1,6 +1,7 @@
 package com.undistract
 
 import android.app.Application
+import com.undistract.data.repositories.ProfileManagerRepository
 
 class UndistractApp : Application() {
     lateinit var appBlocker: AppBlocker

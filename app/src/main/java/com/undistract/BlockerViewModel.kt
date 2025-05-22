@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import android.content.Intent
 import com.undistract.data.models.NfcTag
 import com.undistract.services.AppBlockerAccessibilityService
+import com.undistract.services.BlockerService
 
 class BlockerViewModel(application: Application) : AndroidViewModel(application) {
     private val _writtenTags = MutableStateFlow<List<NfcTag>>(emptyList())

@@ -38,7 +38,7 @@
             android:exported="false" />
         <service android:name=".services.AppBlockingService" />
         <service
-            android:name=".BlockerService"
+            android:name=".services.BlockerService"
             android:enabled="true"
             android:exported="false" />
         <service android:name=".services.AppBlockerAccessibilityService"
