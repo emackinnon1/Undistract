@@ -46,7 +46,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
-import com.undistract.BlockerViewModel
+import com.undistract.ui.blocking.BlockerViewModel
 import com.undistract.NfcHelper
 import com.undistract.ProfilesPicker
 import com.undistract.R
