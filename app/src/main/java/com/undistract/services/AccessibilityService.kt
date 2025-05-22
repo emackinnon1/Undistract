@@ -1,4 +1,4 @@
-package com.undistract
+package com.undistract.services
 
 import android.accessibilityservice.AccessibilityService
 import android.content.BroadcastReceiver
@@ -12,6 +12,7 @@ import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.widget.TextView
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.undistract.R
 
 class AppBlockerAccessibilityService : AccessibilityService() {
     companion object {
@@ -85,7 +86,7 @@ class AppBlockerAccessibilityService : AccessibilityService() {
 
     private fun showBlockedAppOverlay(appName: String) {
         if (windowManager == null) {
-            windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+            windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         }
 
         // Remove any existing overlay
@@ -98,7 +99,7 @@ class AppBlockerAccessibilityService : AccessibilityService() {
         }
 
         // Inflate the blocked app layout
-        val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         overlayView = inflater.inflate(R.layout.activity_blocked_app, null)
 
         // Update the message with app name

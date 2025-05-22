@@ -41,7 +41,7 @@
             android:name=".BlockerService"
             android:enabled="true"
             android:exported="false" />
-        <service android:name=".AppBlockerAccessibilityService"
+        <service android:name=".services.AppBlockerAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="false">
             <intent-filter>
