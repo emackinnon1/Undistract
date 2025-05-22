@@ -1,7 +1,5 @@
-package com.undistract
+package com.undistract.ui.profile
 
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,14 +10,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import com.undistract.AppSelectionDialog
 import com.undistract.ProfileFormViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +44,7 @@ fun ProfileFormScreen(
                 navigationIcon = {
                     IconButton(onClick = onDismiss) {
                         Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Default.Close,
+                            imageVector = Icons.Default.Close,
                             contentDescription = "Cancel"
                         )
                     }
@@ -105,7 +104,7 @@ fun ProfileFormScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                painter = androidx.compose.ui.res.painterResource(
+                                painter = painterResource(
                                     id = LocalContext.current.resources.getIdentifier(
                                         profileIcon, "drawable", LocalContext.current.packageName
                                     )
@@ -164,7 +163,7 @@ fun ProfileFormScreen(
                             Text(
                                 "${selectedApps.size}",
                                 style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                    fontWeight = FontWeight.Bold
                                 )
                             )
                         }
@@ -283,7 +282,7 @@ fun IconPickerDialog(
                                 modifier = Modifier.size(56.dp)
                             ) {
                                 Icon(
-                                    painter = androidx.compose.ui.res.painterResource(
+                                    painter = painterResource(
                                         id = LocalContext.current.resources.getIdentifier(
                                             icon, "drawable", LocalContext.current.packageName
                                         )

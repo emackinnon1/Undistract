@@ -1,8 +1,9 @@
-package com.undistract
+package com.undistract.ui.blocking
 
 import android.app.Activity
 import android.content.Intent
 import android.nfc.NfcAdapter
+import android.provider.Settings
 import androidx.compose.animation.*
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -45,6 +46,10 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
+import com.undistract.BlockerViewModel
+import com.undistract.NfcHelper
+import com.undistract.ProfilesPicker
+import com.undistract.R
 import com.undistract.app.UndistractApp
 import com.undistract.data.models.NfcTag
 
@@ -199,7 +204,7 @@ fun BlockerScreen(
                                     viewModel.showScanTagAlert()
                                 } else {
                                     // Prompt to enable NFC
-                                    val intent = Intent(android.provider.Settings.ACTION_NFC_SETTINGS)
+                                    val intent = Intent(Settings.ACTION_NFC_SETTINGS)
                                     context.startActivity(intent)
                                 }
                             },
