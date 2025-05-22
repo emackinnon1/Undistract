@@ -1,4 +1,4 @@
-package com.undistract
+package com.undistract.ui.profile
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -26,7 +26,8 @@ class ProfileFormViewModel(
     private val _profileIcon = MutableStateFlow(profile?.icon ?: "baseline_block_24")
     val profileIcon = _profileIcon.asStateFlow()
 
-    private val _selectedApps = MutableStateFlow<List<String>>(profile?.appPackageNames ?: emptyList())
+    private val _selectedApps =
+        MutableStateFlow<List<String>>(profile?.appPackageNames ?: emptyList())
     val selectedApps = _selectedApps.asStateFlow()
 
     val isEditing: Boolean
