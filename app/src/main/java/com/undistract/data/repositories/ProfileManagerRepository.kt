@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 
-class ProfileManager(private val context: Context) {
+class ProfileManagerRepository(private val context: Context) {
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences(
         "profile_manager_prefs", Context.MODE_PRIVATE
     )
@@ -46,7 +46,7 @@ class ProfileManager(private val context: Context) {
 
                 _profiles.value = profilesList
             } catch (e: Exception) {
-                Log.e("ProfileManager", "Error loading profiles", e)
+                Log.e("ProfileManagerRepository", "Error loading profiles", e)
                 createDefaultProfile()
             }
         } else {
@@ -81,7 +81,7 @@ class ProfileManager(private val context: Context) {
 
             updateCurrentProfile()
         } catch (e: Exception) {
-            Log.e("ProfileManager", "Error saving profiles", e)
+            Log.e("ProfileManagerRepository", "Error saving profiles", e)
         }
     }
 
