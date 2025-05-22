@@ -1,4 +1,4 @@
-package com.undistract
+package com.undistract.ui.profile
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,12 +16,14 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material3.CenterAlignedTopAppBar
-import com.undistract.data.repositories.ProfileRepository
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import com.undistract.AppSelectionDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileFormScreen(
-    viewModel: ProfileRepository = viewModel(),
+    viewModel: ProfileViewModel = viewModel(),
     onDismiss: () -> Unit
 ) {
     val profileName by viewModel.profileName.collectAsState()
@@ -41,7 +43,7 @@ fun ProfileFormScreen(
                 navigationIcon = {
                     IconButton(onClick = onDismiss) {
                         Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Default.Close,
+                            imageVector = Icons.Default.Close,
                             contentDescription = "Cancel"
                         )
                     }
@@ -101,7 +103,7 @@ fun ProfileFormScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                painter = androidx.compose.ui.res.painterResource(
+                                painter = painterResource(
                                     id = LocalContext.current.resources.getIdentifier(
                                         profileIcon, "drawable", LocalContext.current.packageName
                                     )
@@ -160,7 +162,7 @@ fun ProfileFormScreen(
                             Text(
                                 "${selectedApps.size}",
                                 style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                    fontWeight = FontWeight.Bold
                                 )
                             )
                         }
@@ -279,7 +281,7 @@ fun IconPickerDialog(
                                 modifier = Modifier.size(56.dp)
                             ) {
                                 Icon(
-                                    painter = androidx.compose.ui.res.painterResource(
+                                    painter = painterResource(
                                         id = LocalContext.current.resources.getIdentifier(
                                             icon, "drawable", LocalContext.current.packageName
                                         )

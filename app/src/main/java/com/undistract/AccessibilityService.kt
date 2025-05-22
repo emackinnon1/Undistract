@@ -1,4 +1,4 @@
-package com.undistract.services
+package com.undistract.services.accessibility
 
 import android.accessibilityservice.AccessibilityService
 import android.content.BroadcastReceiver
