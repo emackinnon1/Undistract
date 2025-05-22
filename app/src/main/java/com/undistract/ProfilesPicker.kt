@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.undistract.app.UndistractApp
 import com.undistract.data.models.Profile
 import com.undistract.data.repositories.ProfileManagerRepository
 

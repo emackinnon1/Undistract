@@ -1,6 +1,7 @@
-package com.undistract
+package com.undistract.app
 
 import android.app.Application
+import com.undistract.AppBlocker
 import com.undistract.data.repositories.ProfileManagerRepository
 
 class UndistractApp : Application() {
