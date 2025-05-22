@@ -45,6 +45,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
+import com.undistract.data.models.NfcTag
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)

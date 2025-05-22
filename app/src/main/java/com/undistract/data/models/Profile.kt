@@ -1,4 +1,4 @@
-package com.undistract
+package com.undistract.data.models
 
 import org.json.JSONArray
 import org.json.JSONObject

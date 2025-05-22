@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import android.content.Intent
+import com.undistract.data.models.NfcTag
 import com.undistract.services.AppBlockerAccessibilityService
 
 class BlockerViewModel(application: Application) : AndroidViewModel(application) {

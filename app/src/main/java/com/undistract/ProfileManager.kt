@@ -3,6 +3,7 @@ package com.undistract
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import com.undistract.data.models.Profile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
