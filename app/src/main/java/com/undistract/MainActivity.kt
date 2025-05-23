@@ -15,6 +15,7 @@ import android.view.accessibility.AccessibilityManager
 import android.provider.Settings
 import android.widget.Toast
 import android.content.Context
+import com.undistract.nfc.NfcHelper
 import com.undistract.ui.blocking.BlockerScreen
 
 class MainActivity : ComponentActivity() {
