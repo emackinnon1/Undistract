@@ -1,4 +1,4 @@
-package com.undistract
+package com.undistract.ui.profile
 
 import android.content.Intent
 import android.graphics.Bitmap
@@ -35,8 +35,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import kotlin.collections.addAll
-import kotlin.text.clear
+import com.undistract.R
+import com.undistract.app.UndistractApp
+import com.undistract.data.models.Profile
+import com.undistract.managers.ProfileManager
 
 
 @Composable

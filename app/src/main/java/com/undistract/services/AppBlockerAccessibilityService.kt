@@ -1,17 +1,22 @@
-package com.undistract
+package com.undistract.services
 
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.PixelFormat
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityManager
 import android.widget.TextView
+import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.undistract.R
 
 class AppBlockerAccessibilityService : AccessibilityService() {
     companion object {
@@ -21,8 +26,34 @@ class AppBlockerAccessibilityService : AccessibilityService() {
 
         var isBlocking = false
         var blockedApps = listOf<String>()
+
+        /**
+         * Checks if the accessibility service is enabled and prompts the user to enable it if not.
+         */
+        fun ensureAccessibilityServiceEnabled(context: Context) {
+            val accessibilityManager = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+            val enabledServices = accessibilityManager.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+
+            val isServiceEnabled = enabledServices.any {
+                it.id.contains(context.packageName + "/.services.AppBlockerAccessibilityService")
+            }
+
+            if (!isServiceEnabled) {
+                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                    // Add this flag when starting activity from non-Activity context
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+                Toast.makeText(
+                    context,
+                    "Please enable Undistract Accessibility Service to block apps",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
     }
 
+    // Rest of the existing AppBlockerAccessibilityService code
     private var windowManager: WindowManager? = null
     private var overlayView: View? = null
 
@@ -85,7 +116,7 @@ class AppBlockerAccessibilityService : AccessibilityService() {
 
     private fun showBlockedAppOverlay(appName: String) {
         if (windowManager == null) {
-            windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+            windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         }
 
         // Remove any existing overlay
@@ -98,7 +129,7 @@ class AppBlockerAccessibilityService : AccessibilityService() {
         }
 
         // Inflate the blocked app layout
-        val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         overlayView = inflater.inflate(R.layout.activity_blocked_app, null)
 
         // Update the message with app name

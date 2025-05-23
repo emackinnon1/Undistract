@@ -1,15 +1,20 @@
-package com.undistract
+package com.undistract.ui.blocking
 
 import android.app.Application
 import android.content.Context
-import androidx.lifecycle.AndroidViewModel
-import com.undistract.UndistractApp
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.launch
 import android.content.Intent
+import android.util.Log
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.undistract.app.UndistractApp
+import com.undistract.data.models.NfcTag
+import com.undistract.services.AppBlockerAccessibilityService
+import com.undistract.services.BlockerService
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import org.json.JSONArray
 
 class BlockerViewModel(application: Application) : AndroidViewModel(application) {
     private val _writtenTags = MutableStateFlow<List<NfcTag>>(emptyList())
@@ -18,8 +23,8 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
     // Store tags in SharedPreferences for persistence
     private val prefs = application.getSharedPreferences("nfc_tags", Context.MODE_PRIVATE)
 
-    private val appBlocker = UndistractApp.appBlocker
-    private val profileManager = UndistractApp.profileManager
+    private val appBlocker = UndistractApp.Companion.appBlocker
+    private val profileManager = UndistractApp.Companion.profileManager
 
     private val tagPhrase = "UNDISTRACT-IS-GREAT"
     private val _isBlocking = MutableStateFlow(false)
@@ -44,7 +49,7 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
 
     init {
         // Load saved tags on init
-        android.util.Log.d("BlockerViewModel", "Initializing ViewModel")
+        Log.d("BlockerViewModel", "Initializing ViewModel")
         loadSavedTags()
     }
 
@@ -56,21 +61,21 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
                 return
             }
 
-            android.util.Log.d("BlockerViewModel", "Loading tags JSON: $tagsJson")
+            Log.d("BlockerViewModel", "Loading tags JSON: $tagsJson")
 
-            val jsonArray = org.json.JSONArray(tagsJson)
+            val jsonArray = JSONArray(tagsJson)
             val tagsList = mutableListOf<NfcTag>()
 
             for (i in 0 until jsonArray.length()) {
                 val tagJson = jsonArray.getJSONObject(i)
-                tagsList.add(NfcTag.fromJson(tagJson))
+                tagsList.add(NfcTag.Companion.fromJson(tagJson))
             }
 
             _writtenTags.value = tagsList
-            android.util.Log.d("BlockerViewModel", "Loaded tags count: ${_writtenTags.value.size}")
+            Log.d("BlockerViewModel", "Loaded tags count: ${_writtenTags.value.size}")
 
         } catch (e: Exception) {
-            android.util.Log.e("BlockerViewModel", "Error loading saved tags", e)
+            Log.e("BlockerViewModel", "Error loading saved tags", e)
             e.printStackTrace() // Adds full stack trace to logcat
             _writtenTags.value = emptyList()
         }
@@ -82,13 +87,13 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
         _writtenTags.value = updatedTags
 
         // Persist to SharedPreferences using JSONArray
-        val jsonArray = org.json.JSONArray()
+        val jsonArray = JSONArray()
         updatedTags.forEach { tag ->
             jsonArray.put(tag.toJson())
         }
 
         prefs.edit().putString("nfc_tags", jsonArray.toString()).apply()
-        android.util.Log.d("BlockerViewModel", "Saved new tag: $payload, total tags: ${updatedTags.size}")
+        Log.d("BlockerViewModel", "Saved new tag: $payload, total tags: ${updatedTags.size}")
     }
 
     fun showScanTagAlert() {
@@ -109,14 +114,14 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
                 val profile = profileManager.currentProfile.value
                 println("VALID TAG DETECTED FOR PROFILE: $profile")
 
-                // Toggle blocking state using appBlocker
+                // Toggle blocking state using appBlockerManager
                 profile?.let {
                     val newBlockingState = !appBlocker.isBlocking.value
                     println("New blocking state: $newBlockingState")
 
                     if (newBlockingState) {
                         // First ensure the accessibility service is enabled
-                        ensureAccessibilityServiceEnabled(getApplication<Application>())
+                        AppBlockerAccessibilityService.Companion.ensureAccessibilityServiceEnabled(getApplication<Application>())
 
                         // Start blocking with current profile
                         startBlockingApps(it.appPackageNames)
@@ -132,20 +137,20 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun startBlockingApps(appPackages: List<String>) {
-        val intent = Intent(UndistractApp.instance, BlockerService::class.java).apply {
-            action = BlockerService.ACTION_START_BLOCKING
-            putStringArrayListExtra(BlockerService.EXTRA_APP_PACKAGES, ArrayList(appPackages))
+        val intent = Intent(UndistractApp.Companion.instance, BlockerService::class.java).apply {
+            action = BlockerService.Companion.ACTION_START_BLOCKING
+            putStringArrayListExtra(BlockerService.Companion.EXTRA_APP_PACKAGES, ArrayList(appPackages))
         }
-        UndistractApp.instance.startService(intent)
+        UndistractApp.Companion.instance.startService(intent)
         appBlocker.setBlockingState(true)
     }
 
     private fun stopBlockingApps() {
         // Stop the blocking service or mechanism
-        val intent = Intent(UndistractApp.instance, BlockerService::class.java).apply {
-            action = BlockerService.ACTION_STOP_BLOCKING
+        val intent = Intent(UndistractApp.Companion.instance, BlockerService::class.java).apply {
+            action = BlockerService.Companion.ACTION_STOP_BLOCKING
         }
-        UndistractApp.instance.startService(intent)
+        UndistractApp.Companion.instance.startService(intent)
         appBlocker.setBlockingState(false)
         println("stopBlockingApps blocking state: ${appBlocker.isBlocking}")
     }

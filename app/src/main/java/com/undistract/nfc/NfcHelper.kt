@@ -1,17 +1,15 @@
-package com.undistract
+package com.undistract.nfc
 
 import android.app.Activity
+import android.app.PendingIntent
 import android.content.Intent
 import android.nfc.NdefMessage
 import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.Ndef
-import android.os.Parcelable
 import android.util.Log
 import android.widget.Toast
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.nio.charset.Charset
 
 class NfcHelper(private val activity: Activity) {
@@ -29,8 +27,8 @@ class NfcHelper(private val activity: Activity) {
             val intent = Intent(activity, activity.javaClass).apply {
                 addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             }
-            val pendingIntent = android.app.PendingIntent.getActivity(
-                activity, 0, intent, android.app.PendingIntent.FLAG_MUTABLE
+            val pendingIntent = PendingIntent.getActivity(
+                activity, 0, intent, PendingIntent.FLAG_MUTABLE
             )
             nfcAdapter?.enableForegroundDispatch(activity, pendingIntent, null, null)
         }

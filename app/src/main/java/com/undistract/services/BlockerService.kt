@@ -1,4 +1,4 @@
-package com.undistract
+package com.undistract.services
 
 import android.app.Service
 import android.content.Intent
