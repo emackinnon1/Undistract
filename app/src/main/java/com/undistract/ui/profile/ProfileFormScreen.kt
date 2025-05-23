@@ -18,8 +18,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import com.undistract.AppSelectionDialog
-import com.undistract.ui.profile.ProfileFormViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -1,22 +1,22 @@
 package com.undistract
 
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
+import android.view.accessibility.AccessibilityManager
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.undistract.ui.theme.UndistractTheme
-import android.accessibilityservice.AccessibilityServiceInfo
-import android.view.accessibility.AccessibilityManager
-import android.provider.Settings
-import android.widget.Toast
-import android.content.Context
 import com.undistract.nfc.NfcHelper
 import com.undistract.ui.blocking.BlockerScreen
+import com.undistract.ui.theme.UndistractTheme
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class MainActivity : ComponentActivity() {
     private lateinit var nfcHelper: NfcHelper
@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             UndistractTheme {
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.Companion.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     BlockerScreen(nfcHelper = nfcHelper, newIntentFlow = newIntentFlow)
@@ -83,7 +83,7 @@ class MainActivity : ComponentActivity() {
 
     // Helper method to check if accessibility service is enabled
     private fun isAccessibilityServiceEnabled(context: Context): Boolean {
-        val accessibilityManager = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+        val accessibilityManager = context.getSystemService(ACCESSIBILITY_SERVICE) as AccessibilityManager
         val enabledServices = accessibilityManager.getEnabledAccessibilityServiceList(
             AccessibilityServiceInfo.FEEDBACK_ALL_MASK
         )

@@ -3,7 +3,7 @@ package com.undistract.data.repositories
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
-import com.undistract.AppInfo
+import com.undistract.ui.profile.AppInfo
 import com.undistract.data.models.Profile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
