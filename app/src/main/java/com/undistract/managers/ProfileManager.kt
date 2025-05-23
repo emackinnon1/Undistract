@@ -1,16 +1,16 @@
-package com.undistract.data.repositories
+package com.undistract.managers
 
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
-import com.undistract.ui.profile.AppInfo
 import com.undistract.data.models.Profile
+import com.undistract.ui.profile.AppInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 
-class ProfileManagerRepository(private val context: Context) {
+class ProfileManager(private val context: Context) {
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences(
         "profile_manager_prefs", Context.MODE_PRIVATE
     )
@@ -46,7 +46,7 @@ class ProfileManagerRepository(private val context: Context) {
 
                 _profiles.value = profilesList
             } catch (e: Exception) {
-                Log.e("ProfileManagerRepository", "Error loading profiles", e)
+                Log.e("ProfileManager", "Error loading profiles", e)
                 createDefaultProfile()
             }
         } else {
@@ -81,7 +81,7 @@ class ProfileManagerRepository(private val context: Context) {
 
             updateCurrentProfile()
         } catch (e: Exception) {
-            Log.e("ProfileManagerRepository", "Error saving profiles", e)
+            Log.e("ProfileManager", "Error saving profiles", e)
         }
     }
 

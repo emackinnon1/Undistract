@@ -114,7 +114,7 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
                 val profile = profileManager.currentProfile.value
                 println("VALID TAG DETECTED FOR PROFILE: $profile")
 
-                // Toggle blocking state using appBlocker
+                // Toggle blocking state using appBlockerManager
                 profile?.let {
                     val newBlockingState = !appBlocker.isBlocking.value
                     println("New blocking state: $newBlockingState")

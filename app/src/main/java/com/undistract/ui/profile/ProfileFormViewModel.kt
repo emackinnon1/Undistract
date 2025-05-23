@@ -3,21 +3,21 @@ package com.undistract.ui.profile
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.undistract.data.models.Profile
-import com.undistract.data.repositories.ProfileManagerRepository
+import com.undistract.managers.ProfileManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.UUID
 
 class ProfileFormViewModel(
-    private val profileManagerRepository: ProfileManagerRepository,
+    private val profileManager: ProfileManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     // Get profile ID from navigation arguments, if any
     private val _profileId = MutableStateFlow<String?>(savedStateHandle["profileId"])
     val profileId: StateFlow<String?> = _profileId.asStateFlow()
-    private val profile = profileId.value?.let { profileManagerRepository.getProfileById(it) }
+    private val profile = profileId.value?.let { profileManager.getProfileById(it) }
 
     // UI state
     private val _profileName = MutableStateFlow(profile?.name ?: "")
@@ -49,7 +49,7 @@ class ProfileFormViewModel(
     // Save profile
     fun saveProfile(onComplete: () -> Unit) {
         if (profile != null) {
-            profileManagerRepository.updateProfile(
+            profileManager.updateProfile(
                 id = profile.id,
                 name = _profileName.value,
                 appPackageNames = _selectedApps.value,
@@ -62,14 +62,14 @@ class ProfileFormViewModel(
                 appPackageNames = _selectedApps.value,
                 icon = _profileIcon.value
             )
-            profileManagerRepository.addProfile(newProfile)
+            profileManager.addProfile(newProfile)
         }
         onComplete()
     }
 
     fun deleteProfile(onComplete: () -> Unit) {
         profile?.let {
-            profileManagerRepository.deleteProfile(it.id)
+            profileManager.deleteProfile(it.id)
             onComplete()
         }
     }

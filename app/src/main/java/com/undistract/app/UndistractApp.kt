@@ -1,28 +1,28 @@
 package com.undistract.app
 
 import android.app.Application
-import com.undistract.AppBlocker
-import com.undistract.data.repositories.ProfileManagerRepository
+import com.undistract.managers.AppBlockerManager
+import com.undistract.managers.ProfileManager
 
 class UndistractApp : Application() {
-    lateinit var appBlocker: AppBlocker
+    lateinit var appBlockerManager: AppBlockerManager
         private set
 
-    lateinit var profileManagerRepository: ProfileManagerRepository
+    lateinit var profileManager: ProfileManager
         private set
 
     override fun onCreate() {
         super.onCreate()
         instance = this
-        appBlocker = AppBlocker(this)
-        profileManagerRepository = ProfileManagerRepository(this)
+        appBlockerManager = AppBlockerManager(this)
+        this@UndistractApp.profileManager = ProfileManager(this)
     }
 
     companion object {
         lateinit var instance: UndistractApp
             private set
 
-        val appBlocker get() = instance.appBlocker
-        val profileManager get() = instance.profileManagerRepository
+        val appBlocker get() = instance.appBlockerManager
+        val profileManager get() = instance.profileManager
     }
 }

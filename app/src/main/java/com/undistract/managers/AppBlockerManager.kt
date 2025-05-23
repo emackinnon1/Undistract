@@ -1,10 +1,10 @@
-package com.undistract
+package com.undistract.managers
 
 import android.app.AppOpsManager
-import android.os.Build
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Process
 import android.provider.Settings
 import com.undistract.data.models.Profile
@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class AppBlocker(private val context: Context) {
+class AppBlockerManager(private val context: Context) {
     private val _isBlocking = MutableStateFlow(false)
     val isBlocking: StateFlow<Boolean> = _isBlocking.asStateFlow()
 
