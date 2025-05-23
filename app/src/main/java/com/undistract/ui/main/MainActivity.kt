@@ -1,4 +1,4 @@
-package com.undistract
+package com.undistract.ui.main
 
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context

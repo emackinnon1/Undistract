@@ -24,7 +24,7 @@
         android:name=".app.UndistractApp"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.main.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Undistract">
             <intent-filter>
@@ -33,7 +33,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".BlockedAppActivity"
+            android:name=".ui.blocking.BlockedAppActivity"
             android:theme="@style/Theme.Undistract.Translucent"
             android:exported="false" />
         <service android:name=".services.AppBlockingService" />

@@ -5,7 +5,7 @@ import android.app.usage.UsageStatsManager
 import android.content.Intent
 import android.os.IBinder
 import android.view.WindowManager
-import com.undistract.MainActivity
+import com.undistract.ui.main.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
