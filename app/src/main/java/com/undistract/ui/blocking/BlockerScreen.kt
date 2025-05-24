@@ -49,7 +49,7 @@ import androidx.compose.ui.platform.LocalDensity
 import com.undistract.nfc.NfcHelper
 import com.undistract.ui.profile.ProfilesPicker
 import com.undistract.R
-import com.undistract.app.UndistractApp
+import com.undistract.UndistractApp
 import com.undistract.data.models.NfcTag
 
 

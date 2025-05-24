@@ -6,7 +6,7 @@ import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.undistract.app.UndistractApp
+import com.undistract.UndistractApp
 import com.undistract.data.models.NfcTag
 import com.undistract.services.AppBlockerAccessibilityService
 import com.undistract.services.BlockerService

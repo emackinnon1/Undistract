@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import com.undistract.data.models.Profile
-import com.undistract.ui.profile.AppInfo
+import com.undistract.data.models.AppInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -157,7 +157,7 @@ class ProfileManager(private val context: Context) {
     }
 
     fun getFilteredAppList(appList: List<AppInfo>): List<AppInfo> {
-        val packageName = "com.undistract" // Your app's package name
+        val packageName = "com.undistract" // Filter this app out
         return appList.filter { it.packageName != packageName }
     }
 

@@ -1,4 +1,4 @@
-package com.undistract.app
+package com.undistract
 
 import android.app.Application
 import com.undistract.managers.AppBlockerManager
