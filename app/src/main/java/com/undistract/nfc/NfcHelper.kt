@@ -23,15 +23,11 @@ class NfcHelper(private val activity: Activity) {
     val isNfcEnabled: Boolean get() = nfcAdapter?.isEnabled == true
 
     fun enableForegroundDispatch() {
-        if (isNfcEnabled) {
-            val intent = Intent(activity, activity.javaClass).apply {
-                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            }
-            val pendingIntent = PendingIntent.getActivity(
-                activity, 0, intent, PendingIntent.FLAG_MUTABLE
-            )
-            nfcAdapter?.enableForegroundDispatch(activity, pendingIntent, null, null)
-        }
+        if (!isNfcEnabled) return
+        
+        val intent = Intent(activity, activity.javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        val pendingIntent = PendingIntent.getActivity(activity, 0, intent, PendingIntent.FLAG_MUTABLE)
+        nfcAdapter?.enableForegroundDispatch(activity, pendingIntent, null, null)
     }
 
     fun disableForegroundDispatch() {
@@ -41,55 +37,42 @@ class NfcHelper(private val activity: Activity) {
     }
 
     fun handleIntent(intent: Intent) {
-        when (intent.action) {
-            NfcAdapter.ACTION_NDEF_DISCOVERED,
-            NfcAdapter.ACTION_TECH_DISCOVERED,
-            NfcAdapter.ACTION_TAG_DISCOVERED -> {
-                val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
-                tag?.let {
-                    if (isWriteMode && textToWrite != null) {
-                        writeToTag(it, textToWrite!!)
-                    } else {
-                        readFromTag(it, intent)
-                    }
-                }
+        if (!isNfcIntent(intent)) return
+
+        intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)?.let { tag ->
+            when {
+                isWriteMode && textToWrite != null -> writeToTag(tag, textToWrite!!)
+                else -> readFromTag(tag, intent)
             }
         }
     }
 
-    /**
-     * Checks if the given intent is an NFC-related intent
-     * @param intent The intent to check
-     * @return true if the intent is NFC-related, false otherwise
-     */
-    fun isNfcIntent(intent: Intent): Boolean {
-        val action = intent.action
-        return action == NfcAdapter.ACTION_NDEF_DISCOVERED ||
-               action == NfcAdapter.ACTION_TECH_DISCOVERED ||
-               action == NfcAdapter.ACTION_TAG_DISCOVERED
-    }
+    fun isNfcIntent(intent: Intent): Boolean = intent.action in listOf(
+        NfcAdapter.ACTION_NDEF_DISCOVERED,
+        NfcAdapter.ACTION_TECH_DISCOVERED,
+        NfcAdapter.ACTION_TAG_DISCOVERED
+    )
 
     private fun readFromTag(tag: Tag, intent: Intent) {
         try {
-            // First try to get NDEF message directly from intent
+            // Try to get NDEF message from intent first
             intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)?.let { rawMessages ->
-                val messages = rawMessages.map { it as NdefMessage }
-                if (messages.isNotEmpty()) {
-                    processNdefMessage(messages[0])
+                (rawMessages.firstOrNull() as? NdefMessage)?.let { 
+                    processNdefMessage(it)
                     return
                 }
             }
 
-            // If not available in intent, try to read from tag
-            val ndef = Ndef.get(tag)
-            if (ndef != null) {
-                ndef.connect()
-                val ndefMessage = ndef.cachedNdefMessage
-                processNdefMessage(ndefMessage)
-                ndef.close()
-            } else {
-                showMessage("Tag doesn't contain NDEF data")
-            }
+            // Otherwise read from tag
+            Ndef.get(tag)?.apply {
+                connect()
+                try {
+                    cachedNdefMessage?.let { processNdefMessage(it) }
+                        ?: showMessage("Tag doesn't contain NDEF data")
+                } finally {
+                    close()
+                }
+            } ?: showMessage("Tag doesn't support NDEF")
         } catch (e: Exception) {
             Log.e("NfcHelper", "Error reading NFC tag", e)
             showMessage("Error reading tag: ${e.message}")
@@ -98,66 +81,74 @@ class NfcHelper(private val activity: Activity) {
 
     private fun processNdefMessage(ndefMessage: NdefMessage) {
         for (record in ndefMessage.records) {
-            when (record.tnf) {
-                NdefRecord.TNF_WELL_KNOWN -> {
-                    if (record.type.contentEquals(NdefRecord.RTD_TEXT)) {
-                        val payload = record.payload
-                        // Skip language code (first byte indicates length)
-                        val languageCodeLength = payload[0].toInt() and 0x3F
-                        val text = String(
-                            payload,
-                            1 + languageCodeLength,
-                            payload.size - 1 - languageCodeLength,
-                            Charset.forName("UTF-8")
-                        )
-                        onTagReadListener?.invoke(text)
-                        return
-                    } else if (record.type.contentEquals(NdefRecord.RTD_URI)) {
-                        val payload = record.payload
-                        // Skip URI identifier code (first byte)
-                        val text = String(payload, 1, payload.size - 1, Charset.forName("UTF-8"))
-                        onTagReadListener?.invoke(text)
-                        return
-                    }
+            val text = when {
+                // Text record
+                record.tnf == NdefRecord.TNF_WELL_KNOWN && 
+                record.type.contentEquals(NdefRecord.RTD_TEXT) -> {
+                    val payload = record.payload
+                    val langCodeLength = payload[0].toInt() and 0x3F
+                    String(
+                        payload,
+                        1 + langCodeLength,
+                        payload.size - 1 - langCodeLength,
+                        Charset.forName("UTF-8")
+                    )
                 }
-                NdefRecord.TNF_ABSOLUTE_URI -> {
-                    val text = String(record.payload, Charset.forName("UTF-8"))
-                    onTagReadListener?.invoke(text)
-                    return
+                
+                // URI record
+                record.tnf == NdefRecord.TNF_WELL_KNOWN && 
+                record.type.contentEquals(NdefRecord.RTD_URI) -> {
+                    String(record.payload, 1, record.payload.size - 1, Charset.forName("UTF-8"))
                 }
+                
+                // Absolute URI
+                record.tnf == NdefRecord.TNF_ABSOLUTE_URI -> {
+                    String(record.payload, Charset.forName("UTF-8"))
+                }
+                
+                else -> null
+            }
+            
+            if (text != null) {
+                onTagReadListener?.invoke(text)
+                return
             }
         }
     }
 
     private fun writeToTag(tag: Tag, text: String) {
         try {
-            val ndef = Ndef.get(tag)
-            if (ndef != null) {
-                ndef.connect()
-                if (!ndef.isWritable) {
-                    showMessage("Tag is read-only")
-                    onTagWriteListener?.invoke(false)
-                    return
+            Ndef.get(tag)?.apply {
+                connect()
+                try {
+                    when {
+                        !isWritable -> {
+                            showMessage("Tag is read-only")
+                            onTagWriteListener?.invoke(false)
+                        }
+                        else -> {
+                            val record = NdefRecord.createTextRecord("en", text)
+                            val message = NdefMessage(arrayOf(record))
+                            
+                            if (message.byteArrayLength > maxSize) {
+                                showMessage("Message too large for tag")
+                                onTagWriteListener?.invoke(false)
+                                return
+                            }
+                            
+                            writeNdefMessage(message)
+                            showMessage("Write successful!")
+                            onTagWriteListener?.invoke(true)
+                            
+                            // Reset write mode after successful write
+                            isWriteMode = false
+                            textToWrite = null
+                        }
+                    }
+                } finally {
+                    close()
                 }
-
-                val record = NdefRecord.createTextRecord("en", text)
-                val message = NdefMessage(arrayOf(record))
-
-                if (message.byteArrayLength > ndef.maxSize) {
-                    showMessage("Message too large for tag")
-                    onTagWriteListener?.invoke(false)
-                    return
-                }
-
-                ndef.writeNdefMessage(message)
-                showMessage("Write successful!")
-                onTagWriteListener?.invoke(true)
-                ndef.close()
-
-                // Reset write mode after successful write
-                isWriteMode = false
-                textToWrite = null
-            } else {
+            } ?: run {
                 showMessage("Tag doesn't support NDEF")
                 onTagWriteListener?.invoke(false)
             }
@@ -168,7 +159,6 @@ class NfcHelper(private val activity: Activity) {
         }
     }
 
-    // Public methods to start scanning or writing
     fun startScan(onRead: (String) -> Unit) {
         isWriteMode = false
         textToWrite = null
