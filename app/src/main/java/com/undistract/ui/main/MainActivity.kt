@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.undistract.nfc.NfcHelper
+import com.undistract.services.AppBlockerAccessibilityService
 import com.undistract.ui.blocking.BlockerScreen
 import com.undistract.ui.theme.UndistractTheme
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -92,8 +93,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun promptEnableAccessibilityService() {
-        Toast.makeText(this, "Please enable the accessibility service", Toast.LENGTH_LONG).show()
-        startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(this)
     }
 
     private fun showMessage(message: String) {

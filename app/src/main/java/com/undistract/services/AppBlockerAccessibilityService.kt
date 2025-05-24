@@ -3,6 +3,7 @@ package com.undistract.services
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -12,7 +13,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
-import android.view.accessibility.AccessibilityManager
 import android.widget.TextView
 import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -31,23 +31,27 @@ class AppBlockerAccessibilityService : AccessibilityService() {
          * Checks if the accessibility service is enabled and prompts the user to enable it if not.
          */
         fun ensureAccessibilityServiceEnabled(context: Context) {
-            val accessibilityManager = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
-            val serviceId = "${context.packageName}/.services.AppBlockerAccessibilityService"
-            
-            val isEnabled = accessibilityManager
-                .getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-                .any { it.id.contains(serviceId) }
-
-            if (!isEnabled) {
+            if (!isAccessibilityServiceEnabled(context)) {
                 val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(intent)
                 Toast.makeText(
-                    context,
-                    "Please enable Undistract Accessibility Service to block apps",
+                    context, 
+                    "Please enable Undistract Accessibility Service",
                     Toast.LENGTH_LONG
                 ).show()
             }
+        }
+
+        // More reliable way to check if the service is enabled
+        private fun isAccessibilityServiceEnabled(context: Context): Boolean {
+            val enabledServicesString = Settings.Secure.getString(
+                context.contentResolver,
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            ) ?: return false
+
+            val componentName = ComponentName(context, AppBlockerAccessibilityService::class.java)
+            return enabledServicesString.contains(componentName.flattenToString())
         }
     }
 
