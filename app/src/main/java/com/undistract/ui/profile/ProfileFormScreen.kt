@@ -4,20 +4,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,12 +26,11 @@ fun ProfileFormScreen(
     val profileName by viewModel.profileName.collectAsState()
     val profileIcon by viewModel.profileIcon.collectAsState()
     val selectedApps by viewModel.selectedApps.collectAsState()
+    val isEditing = viewModel.isEditing
 
     var showIconPicker by remember { mutableStateOf(false) }
     var showAppSelection by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
-
-    val isEditing = viewModel.isEditing
 
     Scaffold(
         topBar = {
@@ -41,10 +38,7 @@ fun ProfileFormScreen(
                 title = { Text(if (isEditing) "Edit Profile" else "Add Profile") },
                 navigationIcon = {
                     IconButton(onClick = onDismiss) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Cancel"
-                        )
+                        Icon(Icons.Default.Close, "Cancel")
                     }
                 },
                 actions = {
@@ -59,136 +53,92 @@ fun ProfileFormScreen(
         }
     ) { paddingValues ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier = Modifier.fillMaxSize().padding(paddingValues)
         ) {
+            // Profile Details Card
             item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(16.dp)
-                    ) {
-                        Text(
-                            "Profile Details",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            "Profile Name",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-
-                        TextField(
-                            value = profileName,
-                            onValueChange = viewModel::updateProfileName,
-                            modifier = Modifier.fillMaxWidth(),
-                            placeholder = { Text("Enter profile name") }
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { showIconPicker = true }
-                                .padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                painter = painterResource(
-                                    id = LocalContext.current.resources.getIdentifier(
-                                        profileIcon, "drawable", LocalContext.current.packageName
-                                    )
-                                ),
-                                contentDescription = "Profile Icon",
-                                modifier = Modifier.size(40.dp)
-                            )
-
-                            Text(
-                                "Choose Icon",
-                                modifier = Modifier.padding(start = 16.dp)
-                            )
-
-                            Spacer(modifier = Modifier.weight(1f))
-
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = null
-                            )
-                        }
-                    }
-                }
-            }
-
-            item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(16.dp)
-                    ) {
-                        Text(
-                            "App Configuration",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Button(
-                            onClick = { showAppSelection = true },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Configure Blocked Apps")
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Blocked Apps:")
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(
-                                "${selectedApps.size}",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.Bold
-                                )
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            "Undistract doesn't show the names of the selected apps for privacy reasons.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            if (isEditing) {
-                item {
-                    Card(
+                FormCard(title = "Profile Details") {
+                    Text("Profile Name", style = MaterialTheme.typography.bodySmall)
+                    
+                    TextField(
+                        value = profileName,
+                        onValueChange = viewModel::updateProfileName,
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Enter profile name") }
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .clickable { showIconPicker = true }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        val context = LocalContext.current
+                        val iconResId = context.resources.getIdentifier(
+                            profileIcon, "drawable", context.packageName
+                        )
+                        
+                        Icon(
+                            painter = painterResource(iconResId),
+                            contentDescription = "Profile Icon",
+                            modifier = Modifier.size(40.dp)
+                        )
+                        
+                        Text("Choose Icon", modifier = Modifier.padding(start = 16.dp))
+                        
+                        Spacer(modifier = Modifier.weight(1f))
+                        
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null
+                        )
+                    }
+                }
+            }
+            
+            // App Configuration Card
+            item {
+                FormCard(title = "App Configuration") {
+                    Button(
+                        onClick = { showAppSelection = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Configure Blocked Apps")
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Text("Blocked Apps:")
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            "${selectedApps.size}",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Text(
+                        "Undistract doesn't show the names of the selected apps for privacy reasons.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            
+            // Delete Button (only for editing mode)
+            if (isEditing) {
+                item {
+                    FormCard {
                         Button(
                             onClick = { showDeleteConfirmation = true },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.error
                             )
@@ -201,11 +151,12 @@ fun ProfileFormScreen(
         }
     }
 
+    // Dialogs
     if (showIconPicker) {
         IconPickerDialog(
-            onIconSelected = { icon ->
-                viewModel.updateProfileIcon(icon)
-                showIconPicker = false
+            onIconSelected = { 
+                viewModel.updateProfileIcon(it)
+                showIconPicker = false 
             },
             onDismiss = { showIconPicker = false }
         )
@@ -214,8 +165,8 @@ fun ProfileFormScreen(
     if (showAppSelection) {
         AppSelectionDialog(
             selectedApps = selectedApps,
-            onAppsSelected = { apps: List<String> ->
-                viewModel.updateSelectedApps(apps)
+            onAppsSelected = { 
+                viewModel.updateSelectedApps(it)
                 showAppSelection = false
             },
             onDismiss = { showAppSelection = false }
@@ -228,12 +179,10 @@ fun ProfileFormScreen(
             title = { Text("Delete Profile") },
             text = { Text("Are you sure you want to delete this profile?") },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteProfile(onDismiss)
-                        showDeleteConfirmation = false
-                    }
-                ) {
+                TextButton(onClick = {
+                    viewModel.deleteProfile(onDismiss)
+                    showDeleteConfirmation = false
+                }) {
                     Text("Delete", color = MaterialTheme.colorScheme.error)
                 }
             },
@@ -246,13 +195,37 @@ fun ProfileFormScreen(
     }
 }
 
+@Composable
+private fun FormCard(
+    title: String? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            title?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            content()
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IconPickerDialog(
     onIconSelected: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    // This is a simple implementation - you'd want to add more icons
     val icons = listOf(
         "baseline_block_24",
         "baseline_do_not_disturb_24",
@@ -268,23 +241,23 @@ fun IconPickerDialog(
         onDismissRequest = onDismiss,
         title = { Text("Choose an Icon") },
         text = {
+            val context = LocalContext.current
             LazyColumn {
                 items(icons.chunked(4)) { row ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        for (icon in row) {
+                        row.forEach { icon ->
                             IconButton(
                                 onClick = { onIconSelected(icon) },
                                 modifier = Modifier.size(56.dp)
                             ) {
+                                val iconResId = context.resources.getIdentifier(
+                                    icon, "drawable", context.packageName
+                                )
                                 Icon(
-                                    painter = painterResource(
-                                        id = LocalContext.current.resources.getIdentifier(
-                                            icon, "drawable", LocalContext.current.packageName
-                                        )
-                                    ),
+                                    painter = painterResource(iconResId),
                                     contentDescription = null,
                                     modifier = Modifier.size(32.dp)
                                 )

@@ -14,24 +14,22 @@ class ProfileFormViewModel(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    // Get profile ID from navigation arguments, if any
-    private val _profileId = MutableStateFlow<String?>(savedStateHandle["profileId"])
-    val profileId: StateFlow<String?> = _profileId.asStateFlow()
-    private val profile = profileId.value?.let { profileManager.getProfileById(it) }
+    // Retrieve existing profile or create new form state
+    private val profileId = savedStateHandle.get<String>("profileId")
+    private val existingProfile = profileId?.let { profileManager.getProfileById(it) }
 
-    // UI state
-    private val _profileName = MutableStateFlow(profile?.name ?: "")
+    // UI state with default values or existing profile data
+    private val _profileName = MutableStateFlow(existingProfile?.name ?: "")
     val profileName = _profileName.asStateFlow()
 
-    private val _profileIcon = MutableStateFlow(profile?.icon ?: "baseline_block_24")
+    private val _profileIcon = MutableStateFlow(existingProfile?.icon ?: "baseline_block_24")
     val profileIcon = _profileIcon.asStateFlow()
 
-    private val _selectedApps =
-        MutableStateFlow<List<String>>(profile?.appPackageNames ?: emptyList())
+    private val _selectedApps = MutableStateFlow(existingProfile?.appPackageNames ?: emptyList<String>())
     val selectedApps = _selectedApps.asStateFlow()
 
-    val isEditing: Boolean
-        get() = _profileId.value != null
+    // Simple property to check if we're editing or creating
+    val isEditing = profileId != null
 
     // Update state functions
     fun updateProfileName(name: String) {
@@ -48,34 +46,35 @@ class ProfileFormViewModel(
 
     // Save profile
     fun saveProfile(onComplete: () -> Unit) {
-        if (profile != null) {
-            profileManager.updateProfile(
-                id = profile.id,
-                name = _profileName.value,
-                appPackageNames = _selectedApps.value,
-                icon = _profileIcon.value
-            )
+        if (isEditing) {
+            profileId?.let {
+                profileManager.updateProfile(
+                    id = it,
+                    name = _profileName.value,
+                    appPackageNames = _selectedApps.value,
+                    icon = _profileIcon.value
+                )
+            }
         } else {
-            val newProfile = Profile(
-                id = UUID.randomUUID().toString(),
-                name = _profileName.value,
-                appPackageNames = _selectedApps.value,
-                icon = _profileIcon.value
+            profileManager.addProfile(
+                Profile(
+                    id = UUID.randomUUID().toString(),
+                    name = _profileName.value,
+                    appPackageNames = _selectedApps.value,
+                    icon = _profileIcon.value
+                )
             )
-            profileManager.addProfile(newProfile)
         }
         onComplete()
     }
 
     fun deleteProfile(onComplete: () -> Unit) {
-        profile?.let {
-            profileManager.deleteProfile(it.id)
+        profileId?.let {
+            profileManager.deleteProfile(it)
             onComplete()
         }
     }
 
-    // Check if form is valid
-    fun isFormValid(): Boolean {
-        return _profileName.value.isNotBlank()
-    }
+    // Simple validation check
+    fun isFormValid() = _profileName.value.isNotBlank()
 }

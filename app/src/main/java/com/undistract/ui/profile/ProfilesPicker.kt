@@ -36,8 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.undistract.R
-import com.undistract.app.UndistractApp
+import com.undistract.UndistractApp
 import com.undistract.data.models.Profile
+import com.undistract.data.models.AppInfo
 import com.undistract.managers.ProfileManager
 
 
@@ -621,12 +622,6 @@ fun AppSelectionDialog(
         }
     )
 }
-
-data class AppInfo(
-    val packageName: String,
-    val appName: String,
-    val appIcon: Drawable
-)
 
 fun Drawable.toBitmap(): Bitmap {
     if (this is BitmapDrawable) return this.bitmap

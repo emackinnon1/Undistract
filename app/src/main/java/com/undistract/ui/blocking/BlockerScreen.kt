@@ -5,53 +5,40 @@ import android.content.Intent
 import android.nfc.NfcAdapter
 import android.provider.Settings
 import androidx.compose.animation.*
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.shadow
-import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.material3.Divider
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.undistract.R
+import com.undistract.UndistractApp
+import com.undistract.data.models.NfcTag
+import com.undistract.nfc.NfcHelper
+import com.undistract.ui.profile.ProfilesPicker
+import kotlinx.coroutines.flow.StateFlow
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Modifier
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalDensity
-import com.undistract.nfc.NfcHelper
-import com.undistract.ui.profile.ProfilesPicker
-import com.undistract.R
-import com.undistract.app.UndistractApp
-import com.undistract.data.models.NfcTag
-
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -62,44 +49,27 @@ fun BlockerScreen(
 ) {
     val context = LocalContext.current
     val activity = context as Activity
+    val snackbarHostState = remember { SnackbarHostState() }
 
+    // Collect states
     val isBlocking by viewModel.isBlocking.collectAsState(initial = false)
     val showWrongTagAlert by viewModel.showWrongTagAlert.collectAsState(initial = false)
     val showCreateTagAlert by viewModel.showCreateTagAlert.collectAsState(initial = false)
     val nfcWriteSuccess by viewModel.nfcWriteSuccess.collectAsState(initial = false)
-    val nfcWriteDialogShown by viewModel.nfcWriteDialogShown.collectAsState(initial = false)
     val showScanTagAlert by viewModel.showScanTagAlert.collectAsState(initial = false)
-    val showTagsList = remember { mutableStateOf(false) }
     val writtenTags by viewModel.writtenTags.collectAsState()
-
+    val showTagsList = remember { mutableStateOf(false) }
+    
     val profileManager = UndistractApp.profileManager
     val errorMessage by profileManager.errorMessage.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-
 
     // Configure NFC reading
     LaunchedEffect(Unit) {
-        nfcHelper.startScan { payload ->
-            viewModel.scanTag(payload)
-        }
+        nfcHelper.startScan { payload -> viewModel.scanTag(payload) }
     }
 
-    errorMessage?.let { message ->
-        ErrorMessageDialog(
-            errorMessage = message,
-            onDismiss = { profileManager.clearErrorMessage() }
-        )
-    }
-
-    val backgroundColor = if (isBlocking) {
-        MaterialTheme.colorScheme.errorContainer
-    } else {
-        MaterialTheme.colorScheme.secondaryContainer
-    }
-
-    // Handle NFC scanning
+    // Handle NFC scanning lifecycle
     DisposableEffect(nfcHelper) {
-        // Lifecycle observer to enable/disable NFC dispatch
         val lifecycleObserver = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_RESUME -> nfcHelper.enableForegroundDispatch()
@@ -111,24 +81,31 @@ fun BlockerScreen(
         val lifecycle = (activity as LifecycleOwner).lifecycle
         lifecycle.addObserver(lifecycleObserver)
 
-        // Intent listener for NFC
-        val intent = activity.intent
-        if (NfcAdapter.ACTION_NDEF_DISCOVERED == intent.action) {
-            nfcHelper.handleIntent(intent)
+        // Check for NFC intent
+        if (NfcAdapter.ACTION_NDEF_DISCOVERED == activity.intent.action) {
+            nfcHelper.handleIntent(activity.intent)
         }
 
-        onDispose {
-            lifecycle.removeObserver(lifecycleObserver)
-        }
+        onDispose { lifecycle.removeObserver(lifecycleObserver) }
     }
 
     // Handle new intents
     LaunchedEffect(Unit) {
         newIntentFlow.collect { intent ->
-            if (intent != null && NfcAdapter.ACTION_NDEF_DISCOVERED == intent.action) {
+            if (intent?.action == NfcAdapter.ACTION_NDEF_DISCOVERED) {
                 nfcHelper.handleIntent(intent)
             }
         }
+    }
+
+    // Error dialog
+    errorMessage?.let {
+        AlertDialogWithGlow(
+            title = "Error",
+            text = it,
+            onDismiss = { profileManager.clearErrorMessage() },
+            confirmButtonText = "OK"
+        )
     }
 
     Scaffold(
@@ -147,9 +124,7 @@ fun BlockerScreen(
                         )
                     }
 
-                    IconButton(
-                        onClick = { showTagsList.value = true }
-                    ) {
+                    IconButton(onClick = { showTagsList.value = true }) {
                         Icon(
                             painter = painterResource(id = R.drawable.stack_hexagon_24),
                             contentDescription = "Show Tags"
@@ -163,7 +138,11 @@ fun BlockerScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(backgroundColor)
+                .background(if (isBlocking) 
+                    MaterialTheme.colorScheme.errorContainer 
+                else 
+                    MaterialTheme.colorScheme.secondaryContainer
+                )
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
@@ -202,24 +181,17 @@ fun BlockerScreen(
                                 if (nfcHelper.isNfcEnabled) {
                                     viewModel.showScanTagAlert()
                                 } else {
-                                    // Prompt to enable NFC
-                                    val intent = Intent(Settings.ACTION_NFC_SETTINGS)
-                                    context.startActivity(intent)
+                                    context.startActivity(Intent(Settings.ACTION_NFC_SETTINGS))
                                 }
                             },
                             modifier = Modifier.size(120.dp)
                         ) {
                             PulsingGlowEffect {
                                 Icon(
-                                    painter = painterResource(
-                                        id = R.drawable.undistract_plain
-                                    ),
+                                    painter = painterResource(id = R.drawable.undistract_plain),
                                     contentDescription = if (blocking) "Unblock Apps" else "Block Apps",
                                     modifier = Modifier.size(100.dp),
-                                    tint = if (blocking)
-                                        Color.Red
-                                    else
-                                        MaterialTheme.colorScheme.tertiary
+                                    tint = if (blocking) Color.Red else MaterialTheme.colorScheme.tertiary
                                 )
                             }
                         }
@@ -238,87 +210,45 @@ fun BlockerScreen(
         }
     }
 
-    // Alerts
+    // Alert dialogs
     if (showScanTagAlert) {
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissScanTagAlert() },
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            title = { Text("Scan Your Tag") },
-            text = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Please hold your Undistract NFC tag against the back of your device")
-                    Spacer(modifier = Modifier.height(16.dp))
-                    CircularProgressIndicator(modifier = Modifier.size(40.dp))
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { viewModel.dismissScanTagAlert() }) {
-                    Text("Cancel")
-                }
-            }
+        AlertDialogWithProgress(
+            title = "Scan Your Tag",
+            text = "Please hold your Undistract NFC tag against the back of your device",
+            onDismiss = { viewModel.dismissScanTagAlert() }
         )
     }
 
     if (showWrongTagAlert) {
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissWrongTagAlert() },
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            title = { Text("Not an Undistract Tag") },
-            text = { Text("You can create a new Undistract tag using the + button") },
-            confirmButton = {
-                TextButton(onClick = { viewModel.dismissWrongTagAlert() }) {
-                    Text("OK")
-                }
-            }
+        AlertDialogWithMessage(
+            title = "Not an Undistract Tag",
+            text = "You can create a new Undistract tag using the + button",
+            onConfirm = { viewModel.dismissWrongTagAlert() }
         )
     }
 
     if (showCreateTagAlert) {
-        AlertDialog(
-            onDismissRequest = { viewModel.hideCreateTagAlert() },
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            title = { Text("Create Undistract Tag") },
-            text = { Text("Do you want to create a new Undistract tag?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.onCreateTagConfirmed()
-                    nfcHelper.startWrite("UNDISTRACT-IS-GREAT") { success ->
-                        if (success) {
-                            viewModel.saveTag("UNDISTRACT-IS-GREAT") // Record successful write
-                        }
-                        viewModel.onTagWriteResult(success)
+        AlertDialogWithConfirmation(
+            title = "Create Undistract Tag",
+            text = "Do you want to create a new Undistract tag?",
+            onConfirm = {
+                viewModel.onCreateTagConfirmed()
+                nfcHelper.startWrite("UNDISTRACT-IS-GREAT") { success ->
+                    if (success) {
+                        viewModel.saveTag("UNDISTRACT-IS-GREAT")
                     }
-                }) {
-                    Text("Create")
+                    viewModel.onTagWriteResult(success)
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { viewModel.hideCreateTagAlert() }) {
-                    Text("Cancel")
-                }
-            }
+            onDismiss = { viewModel.hideCreateTagAlert() }
         )
     }
 
     if (nfcWriteSuccess) {
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissNfcWriteSuccessAlert() },
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            title = { Text("Tag Creation") },
-            text = { Text("Undistract tag created successfully!") },
-            confirmButton = {
-                TextButton(onClick = { viewModel.dismissNfcWriteSuccessAlert() }) {
-                    Text("OK")
-                }
-            }
+        AlertDialogWithMessage(
+            title = "Tag Creation",
+            text = "Undistract tag created successfully!",
+            onConfirm = { viewModel.dismissNfcWriteSuccessAlert() }
         )
     }
 
@@ -329,7 +259,6 @@ fun BlockerScreen(
         )
     }
 }
-
 
 @Composable
 fun TagsList(tags: List<NfcTag>, onClose: () -> Unit) {
@@ -355,20 +284,18 @@ fun TagsList(tags: List<NfcTag>, onClose: () -> Unit) {
                 } else {
                     LazyColumn {
                         items(tags) { tag ->
-                            Row(
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 8.dp)
                             ) {
-                                Column {
-                                    Text(tag.payload)
-                                    Text(
-                                        "Created: ${formatDate(tag.createdAt)}",
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
+                                Text(tag.payload)
+                                Text(
+                                    "Created: ${formatDate(tag.createdAt)}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Divider()
                             }
-                            Divider()
                         }
                     }
                 }
@@ -384,41 +311,6 @@ fun TagsList(tags: List<NfcTag>, onClose: () -> Unit) {
     }
 }
 
-private fun formatDate(timestamp: Long): String {
-    val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
-    return sdf.format(Date(timestamp))
-}
-
-
-@Composable
-fun GlowingIconButton(
-    onClick: () -> Unit,
-    icon: @Composable () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .shadow(
-                elevation = 20.dp,
-                shape = CircleShape,
-                spotColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f),
-                ambientColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.6f)
-            )
-            .background(
-                color = MaterialTheme.colorScheme.primaryContainer,
-                shape = CircleShape
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        IconButton(
-            onClick = onClick,
-            modifier = Modifier.padding(16.dp)
-        ) {
-            icon()
-        }
-    }
-}
-
 @Composable
 fun PulsingGlowEffect(content: @Composable () -> Unit) {
     val infiniteTransition = rememberInfiniteTransition(label = "glow")
@@ -428,7 +320,8 @@ fun PulsingGlowEffect(content: @Composable () -> Unit) {
         animationSpec = infiniteRepeatable(
             animation = tween(1500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
-        ), label = "glow"
+        ), 
+        label = "glow"
     )
 
     Box {
@@ -448,13 +341,12 @@ fun PulsingGlowEffect(content: @Composable () -> Unit) {
 @Composable
 fun GlowingBorder(content: @Composable () -> Unit) {
     val density = LocalDensity.current
-
     Box(
         modifier = Modifier
             .drawBehind {
                 val strokeWidth = with(density) { 2.dp.toPx() }
                 val cornerRadius = with(density) { 8.dp.toPx() }
-                val borderColor = Color(0xFFA346FF) // Your neon electric purple
+                val borderColor = Color(0xFFA346FF)
 
                 drawRoundRect(
                     color = borderColor,
@@ -480,10 +372,13 @@ fun GlowingBorder(content: @Composable () -> Unit) {
     }
 }
 
+// Reusable Alert Dialog Components
 @Composable
-fun ErrorMessageDialog(
-    errorMessage: String,
-    onDismiss: () -> Unit
+fun AlertDialogWithGlow(
+    title: String,
+    text: String,
+    onDismiss: () -> Unit,
+    confirmButtonText: String = "OK"
 ) {
     Dialog(onDismissRequest = onDismiss) {
         GlowingBorder {
@@ -496,35 +391,107 @@ fun ErrorMessageDialog(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        "Error",
+                        title,
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.tertiary
                     )
-
                     Spacer(modifier = Modifier.height(16.dp))
-
                     Text(
-                        errorMessage,
+                        text,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-
                     Spacer(modifier = Modifier.height(24.dp))
-
-                    Box(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                        PulsingGlowEffect {
-                            Button(
-                                onClick = onDismiss,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                                )
-                            ) {
-                                Text("OK", color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            }
-                        }
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    ) {
+                        Text(confirmButtonText, color = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+fun AlertDialogWithProgress(
+    title: String,
+    text: String,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        title = { Text(title) },
+        text = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text)
+                Spacer(modifier = Modifier.height(16.dp))
+                CircularProgressIndicator(modifier = Modifier.size(40.dp))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun AlertDialogWithMessage(
+    title: String,
+    text: String,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onConfirm,
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        title = { Text(title) },
+        text = { Text(text) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("OK")
+            }
+        }
+    )
+}
+
+@Composable
+fun AlertDialogWithConfirmation(
+    title: String,
+    text: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        title = { Text(title) },
+        text = { Text(text) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Create")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+private fun formatDate(timestamp: Long): String {
+    val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
+    return sdf.format(Date(timestamp))
 }
