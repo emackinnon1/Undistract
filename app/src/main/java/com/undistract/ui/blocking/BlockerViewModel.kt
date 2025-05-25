@@ -17,66 +17,66 @@ import kotlinx.coroutines.launch
 import org.json.JSONArray
 
 class BlockerViewModel(application: Application) : AndroidViewModel(application) {
+    companion object {
+        private const val TAG = "BlockerViewModel"
+        private const val PREFS_NAME = "nfc_tags"
+        private const val TAGS_KEY = "nfc_tags"
+        private const val VALID_TAG_PREFIX = "UNDISTRACT"
+        private const val DEFAULT_TAG_PAYLOAD = "UNDISTRACT-IS-GREAT"
+    }
+
+    private val prefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val appBlocker = UndistractApp.appBlocker
+    private val profileManager = UndistractApp.profileManager
+    private val appContext = UndistractApp.instance
+
+    // State flows
     private val _writtenTags = MutableStateFlow<List<NfcTag>>(emptyList())
     val writtenTags = _writtenTags.asStateFlow()
-
-    // Store tags in SharedPreferences for persistence
-    private val prefs = application.getSharedPreferences("nfc_tags", Context.MODE_PRIVATE)
-
-    private val appBlocker = UndistractApp.Companion.appBlocker
-    private val profileManager = UndistractApp.Companion.profileManager
-
-    private val tagPhrase = "UNDISTRACT-IS-GREAT"
-    private val _isBlocking = MutableStateFlow(false)
-
+    
     private val _showWrongTagAlert = MutableStateFlow(false)
     val showWrongTagAlert = _showWrongTagAlert.asStateFlow()
-
+    
     private val _showCreateTagAlert = MutableStateFlow(false)
     val showCreateTagAlert = _showCreateTagAlert.asStateFlow()
-
+    
     private val _nfcWriteSuccess = MutableStateFlow(false)
     val nfcWriteSuccess = _nfcWriteSuccess.asStateFlow()
-
+    
     private val _nfcWriteDialogShown = MutableStateFlow(false)
     val nfcWriteDialogShown = _nfcWriteDialogShown.asStateFlow()
-
+    
+    private val _showScanTagAlert = MutableStateFlow(false)
+    val showScanTagAlert = _showScanTagAlert.asStateFlow()
+    
+    // External state flows
     val isBlocking = appBlocker.isBlocking
     val currentProfile = profileManager.currentProfile
 
-    private val _showScanTagAlert = MutableStateFlow(false)
-    val showScanTagAlert: StateFlow<Boolean> = _showScanTagAlert.asStateFlow()
-
     init {
-        // Load saved tags on init
-        Log.d("BlockerViewModel", "Initializing ViewModel")
         loadSavedTags()
     }
 
     private fun loadSavedTags() {
         try {
-            val tagsJson = prefs.getString("nfc_tags", null)
-            if (tagsJson == null || tagsJson.isEmpty()) {
+            val tagsJson = prefs.getString(TAGS_KEY, null)
+            if (tagsJson.isNullOrEmpty()) {
                 _writtenTags.value = emptyList()
                 return
             }
 
-            Log.d("BlockerViewModel", "Loading tags JSON: $tagsJson")
-
+            Log.d(TAG, "Loading tags JSON: $tagsJson")
             val jsonArray = JSONArray(tagsJson)
             val tagsList = mutableListOf<NfcTag>()
 
             for (i in 0 until jsonArray.length()) {
-                val tagJson = jsonArray.getJSONObject(i)
-                tagsList.add(NfcTag.Companion.fromJson(tagJson))
+                tagsList.add(NfcTag.fromJson(jsonArray.getJSONObject(i)))
             }
 
             _writtenTags.value = tagsList
-            Log.d("BlockerViewModel", "Loaded tags count: ${_writtenTags.value.size}")
-
+            Log.d(TAG, "Loaded ${tagsList.size} tags")
         } catch (e: Exception) {
-            Log.e("BlockerViewModel", "Error loading saved tags", e)
-            e.printStackTrace() // Adds full stack trace to logcat
+            Log.e(TAG, "Error loading saved tags", e)
             _writtenTags.value = emptyList()
         }
     }
@@ -86,73 +86,64 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
         val updatedTags = _writtenTags.value.toMutableList().apply { add(newTag) }
         _writtenTags.value = updatedTags
 
-        // Persist to SharedPreferences using JSONArray
-        val jsonArray = JSONArray()
-        updatedTags.forEach { tag ->
-            jsonArray.put(tag.toJson())
-        }
-
-        prefs.edit().putString("nfc_tags", jsonArray.toString()).apply()
-        Log.d("BlockerViewModel", "Saved new tag: $payload, total tags: ${updatedTags.size}")
-    }
-
-    fun showScanTagAlert() {
-        _showScanTagAlert.value = true
-    }
-
-    fun dismissScanTagAlert() {
-        _showScanTagAlert.value = false
+        // Persist to SharedPreferences
+        prefs.edit().putString(TAGS_KEY, JSONArray().apply {
+            updatedTags.forEach { put(it.toJson()) }
+        }.toString()).apply()
+        
+        Log.d(TAG, "Saved tag: $payload, total: ${updatedTags.size}")
     }
 
     fun scanTag(payload: String) {
         viewModelScope.launch {
             dismissScanTagAlert()
 
-            // Check if it's a valid Undistract tag
-            if (payload.startsWith("UNDISTRACT")) {
-                // Get current profile
-                val profile = profileManager.currentProfile.value
-                println("VALID TAG DETECTED FOR PROFILE: $profile")
-
-                // Toggle blocking state using appBlockerManager
-                profile?.let {
-                    val newBlockingState = !appBlocker.isBlocking.value
-                    println("New blocking state: $newBlockingState")
-
-                    if (newBlockingState) {
-                        // First ensure the accessibility service is enabled
-                        AppBlockerAccessibilityService.Companion.ensureAccessibilityServiceEnabled(getApplication<Application>())
-
-                        // Start blocking with current profile
-                        startBlockingApps(it.appPackageNames)
-                    } else {
-                        // Stop blocking
-                        stopBlockingApps()
-                    }
-                }
+            if (payload.startsWith(VALID_TAG_PREFIX)) {
+                toggleBlocking()
             } else {
                 _showWrongTagAlert.value = true
             }
         }
     }
 
-    private fun startBlockingApps(appPackages: List<String>) {
-        val intent = Intent(UndistractApp.Companion.instance, BlockerService::class.java).apply {
-            action = BlockerService.Companion.ACTION_START_BLOCKING
-            putStringArrayListExtra(BlockerService.Companion.EXTRA_APP_PACKAGES, ArrayList(appPackages))
+    private fun toggleBlocking() {
+        profileManager.currentProfile.value?.let { profile ->
+            val newBlockingState = !appBlocker.isBlocking.value
+            Log.d(TAG, "Toggling blocking to: $newBlockingState for profile: ${profile.name}")
+            
+            if (newBlockingState) {
+                AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(getApplication())
+                startBlockingApps(profile.appPackageNames)
+            } else {
+                stopBlockingApps()
+            }
         }
-        UndistractApp.Companion.instance.startService(intent)
+    }
+
+    private fun startBlockingApps(appPackages: List<String>) {
+        Intent(appContext, BlockerService::class.java).apply {
+            action = BlockerService.ACTION_START_BLOCKING
+            putStringArrayListExtra(BlockerService.EXTRA_APP_PACKAGES, ArrayList(appPackages))
+            appContext.startService(this)
+        }
         appBlocker.setBlockingState(true)
     }
 
     private fun stopBlockingApps() {
-        // Stop the blocking service or mechanism
-        val intent = Intent(UndistractApp.Companion.instance, BlockerService::class.java).apply {
-            action = BlockerService.Companion.ACTION_STOP_BLOCKING
+        Intent(appContext, BlockerService::class.java).apply {
+            action = BlockerService.ACTION_STOP_BLOCKING
+            appContext.startService(this)
         }
-        UndistractApp.Companion.instance.startService(intent)
         appBlocker.setBlockingState(false)
-        println("stopBlockingApps blocking state: ${appBlocker.isBlocking}")
+    }
+
+    // Dialog management functions
+    fun showScanTagAlert() {
+        _showScanTagAlert.value = true
+    }
+
+    fun dismissScanTagAlert() {
+        _showScanTagAlert.value = false
     }
 
     fun showCreateTagAlert() {
