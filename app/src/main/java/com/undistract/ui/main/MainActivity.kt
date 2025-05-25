@@ -4,7 +4,6 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -20,32 +19,26 @@ import com.undistract.ui.theme.UndistractTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class MainActivity : ComponentActivity() {
+    companion object {
+        private const val ACCESSIBILITY_SERVICE_ID = "com.undistract/.services.AppBlockerAccessibilityService"
+    }
+    
     private lateinit var nfcHelper: NfcHelper
-
-    // Create a MutableStateFlow to publish new intents
     val newIntentFlow = MutableStateFlow<Intent?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (!isAccessibilityServiceEnabled(this)) {
+        if (!isAccessibilityServiceEnabled()) {
             promptEnableAccessibilityService()
         }
-
-        // Check if we're coming from BlockedAppActivity
-//        if (intent.getBooleanExtra("came_from_blocked_app", false)) {
-//            showMessage("App is blocked by Undistract")
-//        } else {
-//            showMessage("Hold phone near NFC tag to read")
-//        }
-
 
         nfcHelper = NfcHelper(this)
 
         setContent {
             UndistractTheme {
                 Surface(
-                    modifier = Modifier.Companion.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     BlockerScreen(nfcHelper = nfcHelper, newIntentFlow = newIntentFlow)
@@ -63,7 +56,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        setIntent(intent) // Store the intent for later use
+        setIntent(intent)
         newIntentFlow.value = intent
     }
 
@@ -77,19 +70,13 @@ class MainActivity : ComponentActivity() {
         nfcHelper.disableForegroundDispatch()
     }
 
-    override fun onStop() {
-        super.onStop()
-        // TODO: Ensure any resources are properly released
-    }
-
     // Helper method to check if accessibility service is enabled
-    private fun isAccessibilityServiceEnabled(context: Context): Boolean {
-        val accessibilityManager = context.getSystemService(ACCESSIBILITY_SERVICE) as AccessibilityManager
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        val accessibilityManager = getSystemService(ACCESSIBILITY_SERVICE) as AccessibilityManager
         val enabledServices = accessibilityManager.getEnabledAccessibilityServiceList(
             AccessibilityServiceInfo.FEEDBACK_ALL_MASK
         )
-
-        return enabledServices.any { it.id.contains("com.undistract/.AppBlockerAccessibilityService") }
+        return enabledServices.any { it.id.contains(ACCESSIBILITY_SERVICE_ID) }
     }
 
     private fun promptEnableAccessibilityService() {
