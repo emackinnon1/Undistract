@@ -17,6 +17,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.undistract.R
+import androidx.annotation.VisibleForTesting
+
 
 class AppBlockerAccessibilityService : AccessibilityService() {
     companion object {
@@ -93,7 +95,17 @@ class AppBlockerAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun getAppName(packageName: String): String {
+//    private fun getAppName(packageName: String): String {
+//        return try {
+//            val appInfo = packageManager.getApplicationInfo(packageName, 0)
+//            packageManager.getApplicationLabel(appInfo).toString()
+//        } catch (e: Exception) {
+//            packageName
+//        }
+//    }
+
+    @VisibleForTesting
+    internal fun getAppName(packageName: String): String {
         return try {
             val appInfo = packageManager.getApplicationInfo(packageName, 0)
             packageManager.getApplicationLabel(appInfo).toString()

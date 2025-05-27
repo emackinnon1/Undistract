@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.gson)
+    implementation(libs.androidx.annotation)
     implementation(libs.androidx.runtime)
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)
@@ -76,4 +77,6 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    testImplementation(libs.androidx.core)
+    testImplementation(libs.androidx.junit.v115)
 }
