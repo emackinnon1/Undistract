@@ -32,26 +32,6 @@ class AppBlockerAccessibilityServiceTest {
         service = serviceController.create().get()
     }
 
-//    @Test
-//    fun testBroadcastReceiver_updatesBlockedApps() {
-//        // Given
-//        val testApps = arrayListOf("com.example.app1", "com.example.app2")
-//        val intent = Intent(AppBlockerAccessibilityService.ACTION_UPDATE_BLOCKED_APPS).apply {
-//            putStringArrayListExtra(AppBlockerAccessibilityService.EXTRA_APP_PACKAGES, testApps)
-//            putExtra(AppBlockerAccessibilityService.EXTRA_IS_BLOCKING, true)
-//        }
-//
-//        // When
-//        LocalBroadcastManager.getInstance(ApplicationProvider.getApplicationContext())
-//            .sendBroadcast(intent)
-//
-//        // Then
-//        assertTrue(AppBlockerAccessibilityService.isBlocking)
-//        assertEquals(2, AppBlockerAccessibilityService.blockedApps.size)
-//        assertTrue(AppBlockerAccessibilityService.blockedApps.contains("com.example.app1"))
-//        assertTrue(AppBlockerAccessibilityService.blockedApps.contains("com.example.app2"))
-//    }
-
     @Test
     fun testBroadcastReceiver_updatesBlockedApps() {
         // Given
