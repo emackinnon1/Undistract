@@ -40,14 +40,14 @@ android {
     }
 
     testOptions {
-//        unitTests {
-//            includeAndroidResources = true
-//        }
+        unitTests {
+            isIncludeAndroidResources = true
+        }
     }
 }
 
 dependencies {
-    implementation(libs.androidx.appcompat.v161)
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.cardview)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.localbroadcastmanager)

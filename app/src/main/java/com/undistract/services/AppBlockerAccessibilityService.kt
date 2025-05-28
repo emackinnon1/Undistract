@@ -20,6 +20,7 @@ import com.undistract.R
 import androidx.annotation.VisibleForTesting
 
 
+
 class AppBlockerAccessibilityService : AccessibilityService() {
     companion object {
         const val ACTION_UPDATE_BLOCKED_APPS = "com.undistract.UPDATE_BLOCKED_APPS"
@@ -114,7 +115,8 @@ class AppBlockerAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun removeOverlay() {
+    @VisibleForTesting
+    internal fun removeOverlay() {
         overlayView?.let {
             try {
                 windowManager?.removeView(it)
@@ -125,7 +127,8 @@ class AppBlockerAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun showBlockedAppOverlay(appName: String) {
+    @VisibleForTesting
+    internal fun showBlockedAppOverlay(appName: String) {
         // Initialize window manager if needed
         if (windowManager == null) {
             windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
