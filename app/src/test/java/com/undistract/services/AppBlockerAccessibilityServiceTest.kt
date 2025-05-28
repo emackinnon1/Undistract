@@ -51,6 +51,14 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.robolectric.annotation.Config
 import kotlin.intArrayOf
+import android.accessibilityservice.AccessibilityService
+import android.view.accessibility.AccessibilityEvent
+import org.mockito.Mockito.*
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doNothing
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.never
+import org.mockito.kotlin.spy
 
 
 @RunWith(AndroidJUnit4::class)
@@ -69,6 +77,52 @@ class AppBlockerAccessibilityServiceTest {
         // Initialize service
         serviceController = Robolectric.buildService(AppBlockerAccessibilityService::class.java)
         service = serviceController.create().get()
+    }
+
+    @Test
+    fun testOnAccessibilityEvent_blocksBlockedApp() {
+        // Given
+        val blockedPackage = "com.blocked.app"
+        AppBlockerAccessibilityService.blockedApps = listOf(blockedPackage)
+        AppBlockerAccessibilityService.isBlocking = true
+
+        val event = mock(AccessibilityEvent::class.java)
+        `when`(event.eventType).thenReturn(AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)
+        `when`(event.packageName).thenReturn(blockedPackage)
+
+        // Create a spy to verify method calls
+        val serviceSpy = spy(service)
+        doNothing().`when`(serviceSpy).showBlockedAppOverlay(any())
+        doReturn("Mock App").`when`(serviceSpy).getAppName(any())
+
+        // When
+        serviceSpy.onAccessibilityEvent(event)
+
+        // Then
+        verify(serviceSpy).showBlockedAppOverlay("Mock App")
+        verify(serviceSpy).performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)
+    }
+
+    @Test
+    fun testOnAccessibilityEvent_ignoresNonBlockedApp() {
+        // Given
+        val nonBlockedPackage = "com.allowed.app"
+        AppBlockerAccessibilityService.blockedApps = listOf("com.blocked.app")
+        AppBlockerAccessibilityService.isBlocking = true
+
+        val event = mock(AccessibilityEvent::class.java)
+        `when`(event.eventType).thenReturn(AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)
+        `when`(event.packageName).thenReturn(nonBlockedPackage)
+
+        // Create a spy to verify method calls
+        val serviceSpy = spy(service)
+
+        // When
+        serviceSpy.onAccessibilityEvent(event)
+
+        // Then
+        verify(serviceSpy, never()).showBlockedAppOverlay(any())
+        verify(serviceSpy, never()).performGlobalAction(any())
     }
 
     @Test
