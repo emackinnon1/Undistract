@@ -1,37 +1,5 @@
 package com.undistract.services
 
-/*
-* Looking at `AppBlockerAccessibilityService.kt`, here's what it does:
-
-This is an Android Accessibility Service that:
-1. Monitors which apps are being used via accessibility events
-2. Blocks specified apps by showing an overlay and returning to the home screen
-3. Uses a broadcast receiver to get updates on which apps should be blocked
-4. Maintains a static list of blocked apps and blocking state
-
-Your current tests cover:
-1. The broadcast receiver updating blocked apps list
-2. The `getAppName` method's fallback behavior
-
-Missing test coverage includes:
-
-1. **Core blocking functionality**:
-   - Testing `onAccessibilityEvent` blocks apps correctly
-   - Verification that `performGlobalAction(GLOBAL_ACTION_HOME)` is called
-
-2. **Overlay management**:
-   - Testing `showBlockedAppOverlay` displays the correct message
-   - Testing `removeOverlay` works correctly
-
-3. **Service lifecycle**:
-   - Testing registration/unregistration of the broadcast receiver
-
-4. **Static helper methods**:
-   - Testing `ensureAccessibilityServiceEnabled` behavior
-   - Testing `isAccessibilityServiceEnabled` returns correct values
-
-The most important missing test would be verifying the core functionality that blocked apps get detected and interrupted correctly. This is more complex to test since it involves mocking AccessibilityEvents and the window manager. */
-
 import android.content.Intent
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.test.core.app.ApplicationProvider
@@ -64,13 +32,8 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.provider.Settings
-import org.robolectric.Shadows.shadowOf
-import org.robolectric.shadow.api.Shadow
 import org.robolectric.Shadows
-import org.robolectric.shadows.ShadowSettings
 import org.robolectric.shadows.ShadowToast
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotSame
 
 
 @RunWith(AndroidJUnit4::class)
