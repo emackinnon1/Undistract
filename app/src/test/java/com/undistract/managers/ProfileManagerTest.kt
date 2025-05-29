@@ -1,24 +1,22 @@
-package com.undistract
+package com.undistract.managers
 
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.drawable.Drawable
+import com.undistract.UndistractApp
 import com.undistract.data.models.AppInfo
-import com.undistract.managers.ProfileManager
-import org.junit.Test
-import org.junit.Assert.*
+import org.junit.Assert
 import org.junit.Before
-import org.mockito.Mockito
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.`when`
+import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 //@Config(manifest = "src/main/AndroidManifest.xml")
 @RunWith(RobolectricTestRunner::class)
 @Config(
-    application = com.undistract.UndistractApp::class,
+    application = UndistractApp::class,
     sdk = [34]
 )
 class ProfileManagerTest {
@@ -28,16 +26,16 @@ class ProfileManagerTest {
     @Before
     fun setup() {
         // Create mocks
-        val mockContext = mock(Context::class.java)
-        val mockSharedPreferences = mock(SharedPreferences::class.java)
-        val mockEditor = mock(SharedPreferences.Editor::class.java)
+        val mockContext = Mockito.mock(Context::class.java)
+        val mockSharedPreferences = Mockito.mock(SharedPreferences::class.java)
+        val mockEditor = Mockito.mock(SharedPreferences.Editor::class.java)
 
         // Configure mock behavior
-        `when`(mockContext.getSharedPreferences(Mockito.anyString(), Mockito.anyInt()))
+        Mockito.`when`(mockContext.getSharedPreferences(Mockito.anyString(), Mockito.anyInt()))
             .thenReturn(mockSharedPreferences)
-        `when`(mockSharedPreferences.edit()).thenReturn(mockEditor)
-        `when`(mockEditor.putString(Mockito.anyString(), Mockito.anyString())).thenReturn(mockEditor)
-        `when`(mockEditor.putBoolean(Mockito.anyString(), Mockito.anyBoolean())).thenReturn(mockEditor)
+        Mockito.`when`(mockSharedPreferences.edit()).thenReturn(mockEditor)
+        Mockito.`when`(mockEditor.putString(Mockito.anyString(), Mockito.anyString())).thenReturn(mockEditor)
+        Mockito.`when`(mockEditor.putBoolean(Mockito.anyString(), Mockito.anyBoolean())).thenReturn(mockEditor)
 
         profileManager = ProfileManager(mockContext)
     }
@@ -45,7 +43,7 @@ class ProfileManagerTest {
     @Test
     fun getFilteredAppList_removesOwnPackage() {
         // Create mock Drawable
-        val mockDrawable = mock(Drawable::class.java)
+        val mockDrawable = Mockito.mock(Drawable::class.java)
 
         // Create test app list with mock drawable
         val testAppList = listOf(
@@ -59,9 +57,9 @@ class ProfileManagerTest {
 
 
         // Verify results
-        assertEquals(2, filteredList.size)
-        assertTrue(filteredList.none { it.packageName == "com.undistract" })
-        assertTrue(filteredList.any { it.packageName == "com.example.app1" })
-        assertTrue(filteredList.any { it.packageName == "com.example.app2" })
+        Assert.assertEquals(2, filteredList.size)
+        Assert.assertTrue(filteredList.none { it.packageName == "com.undistract" })
+        Assert.assertTrue(filteredList.any { it.packageName == "com.example.app1" })
+        Assert.assertTrue(filteredList.any { it.packageName == "com.example.app2" })
     }
 }

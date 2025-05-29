@@ -60,6 +60,7 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.never
 import org.mockito.kotlin.spy
 import android.app.Application
+import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.provider.Settings
@@ -68,6 +69,8 @@ import org.robolectric.shadow.api.Shadow
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowSettings
 import org.robolectric.shadows.ShadowToast
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotSame
 
 
 @RunWith(AndroidJUnit4::class)
@@ -246,5 +249,41 @@ class AppBlockerAccessibilityServiceTest {
 
         // And a toast should be shown
         assertEquals("Please enable Undistract Accessibility Service", ShadowToast.getTextOfLatestToast())
+    }
+
+    @Test
+    fun testOnDestroy_unregistersLocalBroadcastReceiver() {
+        // First create and get a reference to our service
+        val service = serviceController.create().get()
+
+        // Create a spy of our service to monitor broadcast reception
+        val serviceSpy = spy(service)
+
+        // Make a reference to the original broadcast receiver
+        val receiverField = AppBlockerAccessibilityService::class.java.getDeclaredField("broadcastReceiver")
+        receiverField.isAccessible = true
+        val originalReceiver = receiverField.get(service) as BroadcastReceiver
+
+        // Create a new spy receiver we can monitor
+        val receiverSpy = spy(originalReceiver)
+        receiverField.set(serviceSpy, receiverSpy)
+
+        // Now destroy the service, which should unregister our spy receiver
+        serviceController.destroy()
+
+        // Send a broadcast after service is destroyed
+        val testApps = arrayListOf("com.test.app")
+        val intent = Intent(AppBlockerAccessibilityService.ACTION_UPDATE_BLOCKED_APPS).apply {
+            putStringArrayListExtra(AppBlockerAccessibilityService.EXTRA_APP_PACKAGES, testApps)
+            putExtra(AppBlockerAccessibilityService.EXTRA_IS_BLOCKING, true)
+        }
+
+        LocalBroadcastManager.getInstance(ApplicationProvider.getApplicationContext())
+            .sendBroadcast(intent)
+
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // Verify that our receiver spy was never called after service destruction
+        verify(receiverSpy, never()).onReceive(any(), any())
     }
 }
