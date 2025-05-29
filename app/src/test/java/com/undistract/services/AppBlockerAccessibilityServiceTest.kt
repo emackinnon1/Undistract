@@ -59,6 +59,15 @@ import org.mockito.kotlin.doNothing
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.never
 import org.mockito.kotlin.spy
+import android.app.Application
+import android.content.ComponentName
+import android.content.Context
+import android.provider.Settings
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.shadow.api.Shadow
+import org.robolectric.Shadows
+import org.robolectric.shadows.ShadowSettings
+import org.robolectric.shadows.ShadowToast
 
 
 @RunWith(AndroidJUnit4::class)
@@ -192,5 +201,50 @@ class AppBlockerAccessibilityServiceTest {
 
         // Then
         assertNull("Overlay should be null after removal", overlayField.get(service))
+    }
+
+    @Test
+    fun testEnsureAccessibilityServiceEnabled_whenServiceEnabled_doesNothing() {
+        // Given: Accessibility service is enabled
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val componentName = ComponentName(context, AppBlockerAccessibilityService::class.java).flattenToString()
+
+        // Use Settings.Secure directly
+        Settings.Secure.putString(
+            context.contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+            componentName
+        )
+
+        // When
+        AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(context)
+
+        // Then: No activity should be started
+        val shadowApplication = Shadows.shadowOf(context as Application)
+        assertNull(shadowApplication.nextStartedActivity)
+    }
+
+    @Test
+    fun testEnsureAccessibilityServiceEnabled_whenServiceDisabled_startsAccessibilitySettings() {
+        // Given: Accessibility service is disabled
+        val context = ApplicationProvider.getApplicationContext<Context>()
+
+        // Clear any enabled accessibility services
+        Settings.Secure.putString(
+            context.contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+            ""
+        )
+
+        // When
+        AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(context)
+
+        // Then: The accessibility settings activity should be started
+        val shadowApplication = Shadows.shadowOf(context as Application)
+        val startedActivity = shadowApplication.nextStartedActivity
+        assertEquals(Settings.ACTION_ACCESSIBILITY_SETTINGS, startedActivity.action)
+
+        // And a toast should be shown
+        assertEquals("Please enable Undistract Accessibility Service", ShadowToast.getTextOfLatestToast())
     }
 }
