@@ -98,7 +98,7 @@ fun ProfilesPicker(
         Spacer(modifier = Modifier.weight(1f))
 
         Text(
-            text = "Long press on a profile to edit...",
+            text = "Long press on a profile to edit or delete it.",
             fontSize = 10.sp,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             textAlign = TextAlign.Center,
