@@ -1,6 +1,5 @@
 package com.undistract.ui.blocking
 
-import android.app.Activity
 import android.content.Intent
 import android.nfc.NfcAdapter
 import android.provider.Settings
@@ -26,9 +25,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.undistract.R
 import com.undistract.UndistractApp
@@ -39,6 +35,9 @@ import kotlinx.coroutines.flow.StateFlow
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -48,53 +47,52 @@ fun BlockerScreen(
     viewModel: BlockerViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val activity = context as Activity
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Collect states
     val isBlocking by viewModel.isBlocking.collectAsState(initial = false)
+    val isWritingTag by viewModel.isWritingTag.collectAsState(initial = false)
     val showWrongTagAlert by viewModel.showWrongTagAlert.collectAsState(initial = false)
     val showCreateTagAlert by viewModel.showCreateTagAlert.collectAsState(initial = false)
     val nfcWriteSuccess by viewModel.nfcWriteSuccess.collectAsState(initial = false)
     val showScanTagAlert by viewModel.showScanTagAlert.collectAsState(initial = false)
     val writtenTags by viewModel.writtenTags.collectAsState()
     val showTagsList = remember { mutableStateOf(false) }
-    
+
     val profileManager = UndistractApp.profileManager
     val errorMessage by profileManager.errorMessage.collectAsState()
 
-    // Configure NFC reading
-    LaunchedEffect(Unit) {
-        nfcHelper.startScan { payload -> viewModel.scanTag(payload) }
-    }
-
-    // Handle NFC scanning lifecycle
-    DisposableEffect(nfcHelper) {
-        val lifecycleObserver = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> nfcHelper.enableForegroundDispatch()
-                Lifecycle.Event.ON_PAUSE -> nfcHelper.disableForegroundDispatch()
-                else -> {}
+    // Control NFC scanning and writing based on dialog visibility
+    LaunchedEffect(showScanTagAlert, isWritingTag) {
+        if (showScanTagAlert || isWritingTag) {
+            if (showScanTagAlert) {
+                nfcHelper.startScan { payload -> viewModel.scanTag(payload) }
             }
+            nfcHelper.enableForegroundDispatch()
+        } else {
+            nfcHelper.disableForegroundDispatch()
         }
-
-        val lifecycle = (activity as LifecycleOwner).lifecycle
-        lifecycle.addObserver(lifecycleObserver)
-
-        // Check for NFC intent
-        if (NfcAdapter.ACTION_NDEF_DISCOVERED == activity.intent.action) {
-            nfcHelper.handleIntent(activity.intent)
-        }
-
-        onDispose { lifecycle.removeObserver(lifecycleObserver) }
     }
 
-    // Handle new intents
+    // Handle new intents for both scanning and writing
     LaunchedEffect(Unit) {
         newIntentFlow.collect { intent ->
-            if (intent?.action == NfcAdapter.ACTION_NDEF_DISCOVERED) {
-                nfcHelper.handleIntent(intent)
+            if (intent?.action == NfcAdapter.ACTION_NDEF_DISCOVERED ||
+                intent?.action == NfcAdapter.ACTION_TAG_DISCOVERED) {
+
+                if (showScanTagAlert) {
+                    nfcHelper.handleIntent(intent)
+                } else if (isWritingTag) {
+                    nfcHelper.handleIntent(intent)
+                }
             }
+        }
+    }
+
+    // Clean up NFC when component is disposed
+    DisposableEffect(Unit) {
+        onDispose {
+            nfcHelper.disableForegroundDispatch()
         }
     }
 
@@ -138,9 +136,9 @@ fun BlockerScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(if (isBlocking) 
-                    MaterialTheme.colorScheme.errorContainer 
-                else 
+                .background(if (isBlocking)
+                    MaterialTheme.colorScheme.errorContainer
+                else
                     MaterialTheme.colorScheme.secondaryContainer
                 )
         ) {
@@ -213,8 +211,11 @@ fun BlockerScreen(
     // Alert dialogs
     if (showScanTagAlert) {
         AlertDialogWithProgress(
-            title = "Scan Your Tag",
-            text = "Please hold your Undistract NFC tag against the back of your device",
+            title = if (isBlocking) "Scan to Unblock" else "Scan to Block",
+            text = if (isBlocking)
+                "Please hold your Undistract NFC tag against your device to unblock apps"
+            else
+                "Please hold your Undistract NFC tag against your device to block distractions",
             onDismiss = { viewModel.dismissScanTagAlert() }
         )
     }
@@ -233,14 +234,31 @@ fun BlockerScreen(
             text = "Do you want to create a new Undistract tag?",
             onConfirm = {
                 viewModel.onCreateTagConfirmed()
-                nfcHelper.startWrite("UNDISTRACT-IS-GREAT") { success ->
+                viewModel.setWritingTag(true)
+                val uniquePayload = viewModel.generateUniqueTagPayload()
+                nfcHelper.startWrite(uniquePayload) { success ->
+                    viewModel.setWritingTag(false)
                     if (success) {
-                        viewModel.saveTag("UNDISTRACT-IS-GREAT")
+                        viewModel.saveTag(uniquePayload)
                     }
                     viewModel.onTagWriteResult(success)
+                    viewModel.setWritingTag(false)
                 }
             },
-            onDismiss = { viewModel.hideCreateTagAlert() }
+            onDismiss = {
+                viewModel.hideCreateTagAlert()
+                viewModel.setWritingTag(false)
+            }
+        )
+    }
+
+    if (isWritingTag) {
+        AlertDialogWithProgress(
+            title = "Writing NFC Tag",
+            text = "Please hold your NFC tag against the back of your device.",
+            onDismiss = {
+                viewModel.setWritingTag(false)
+            }
         )
     }
 
@@ -255,13 +273,21 @@ fun BlockerScreen(
     if (showTagsList.value) {
         TagsList(
             tags = writtenTags,
-            onClose = { showTagsList.value = false }
+            onClose = { showTagsList.value = false },
+            viewModel = viewModel
         )
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TagsList(tags: List<NfcTag>, onClose: () -> Unit) {
+fun TagsList(
+        tags: List<NfcTag>,
+        onClose: () -> Unit,
+        viewModel: BlockerViewModel
+) {
+    var tagToDelete by remember { mutableStateOf<NfcTag?>(null) }
+
     Dialog(onDismissRequest = onClose) {
         Surface(
             shape = RoundedCornerShape(16.dp),
@@ -288,6 +314,10 @@ fun TagsList(tags: List<NfcTag>, onClose: () -> Unit) {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 8.dp)
+                                    .combinedClickable(
+                                        onClick = { },
+                                        onLongClick = { tagToDelete = tag }
+                                    )
                             ) {
                                 Text(tag.payload)
                                 Text(
@@ -309,6 +339,21 @@ fun TagsList(tags: List<NfcTag>, onClose: () -> Unit) {
             }
         }
     }
+
+    // Confirmation dialog for deletion
+    tagToDelete?.let { tag ->
+        AlertDialogWithConfirmation(
+            title = "Delete Tag",
+            text = "Are you sure you want to delete this tag? This action cannot be undone.",
+            onConfirm = {
+                viewModel.deleteTag(tag)
+                tagToDelete = null
+            },
+            onDismiss = {
+                tagToDelete = null
+            }
+        )
+    }
 }
 
 @Composable
@@ -320,7 +365,7 @@ fun PulsingGlowEffect(content: @Composable () -> Unit) {
         animationSpec = infiniteRepeatable(
             animation = tween(1500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
-        ), 
+        ),
         label = "glow"
     )
 
@@ -480,7 +525,7 @@ fun AlertDialogWithConfirmation(
         text = { Text(text) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("Create")
+                Text("Confirm")
             }
         },
         dismissButton = {

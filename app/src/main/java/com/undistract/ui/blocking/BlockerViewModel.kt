@@ -22,7 +22,6 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
         private const val PREFS_NAME = "nfc_tags"
         private const val TAGS_KEY = "nfc_tags"
         private const val VALID_TAG_PREFIX = "UNDISTRACT"
-        private const val DEFAULT_TAG_PAYLOAD = "UNDISTRACT-IS-GREAT"
     }
 
     private val prefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -39,7 +38,10 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
     
     private val _showCreateTagAlert = MutableStateFlow(false)
     val showCreateTagAlert = _showCreateTagAlert.asStateFlow()
-    
+
+    private val _isWritingTag = MutableStateFlow(false)
+    val isWritingTag: StateFlow<Boolean> = _isWritingTag
+
     private val _nfcWriteSuccess = MutableStateFlow(false)
     val nfcWriteSuccess = _nfcWriteSuccess.asStateFlow()
     
@@ -101,9 +103,23 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
             if (payload.startsWith(VALID_TAG_PREFIX)) {
                 toggleBlocking()
             } else {
-                _showWrongTagAlert.value = true
+                showWrongTagAlert()
             }
         }
+    }
+
+    fun deleteTag(tag: NfcTag) {
+        val updatedTags = _writtenTags.value.toMutableList().apply {
+            remove(tag)
+        }
+        _writtenTags.value = updatedTags
+
+        // Persist to SharedPreferences
+        prefs.edit().putString(TAGS_KEY, JSONArray().apply {
+            updatedTags.forEach { put(it.toJson()) }
+        }.toString()).apply()
+
+        Log.d(TAG, "Deleted tag: ${tag.payload}, remaining: ${updatedTags.size}")
     }
 
     private fun toggleBlocking() {
@@ -137,6 +153,16 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
         appBlocker.setBlockingState(false)
     }
 
+    /**
+     * Generates a unique tag payload with the UNDISTRACT prefix and a unique identifier
+     * Format: UNDISTRACT-{timestamp}-{random}
+     */
+    fun generateUniqueTagPayload(): String {
+        val timestamp = System.currentTimeMillis()
+        val random = (1000 + kotlin.random.Random.nextInt(9000))  // 4-digit number
+        return "$VALID_TAG_PREFIX-$timestamp-$random"
+    }
+
     // Dialog management functions
     fun showScanTagAlert() {
         _showScanTagAlert.value = true
@@ -146,8 +172,24 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
         _showScanTagAlert.value = false
     }
 
+    fun showWrongTagAlert() {
+        _showWrongTagAlert.value = true
+    }
+
+    fun dismissWrongTagAlert() {
+        _showWrongTagAlert.value = false
+    }
+
     fun showCreateTagAlert() {
         _showCreateTagAlert.value = true
+    }
+
+    fun setWritingTag(writing: Boolean) {
+        _isWritingTag.value = writing
+    }
+
+    fun cancelWrite() {
+        _isWritingTag.value = false
     }
 
     fun hideCreateTagAlert() {
@@ -162,10 +204,6 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
     fun onTagWriteResult(success: Boolean) {
         _nfcWriteDialogShown.value = false
         _nfcWriteSuccess.value = success
-    }
-
-    fun dismissWrongTagAlert() {
-        _showWrongTagAlert.value = false
     }
 
     fun dismissNfcWriteSuccessAlert() {
