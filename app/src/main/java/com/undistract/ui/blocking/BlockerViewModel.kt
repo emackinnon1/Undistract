@@ -101,7 +101,7 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
             if (payload.startsWith(VALID_TAG_PREFIX)) {
                 toggleBlocking()
             } else {
-                _showWrongTagAlert.value = true
+                showWrongTagAlert()
             }
         }
     }
@@ -146,6 +146,14 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
         _showScanTagAlert.value = false
     }
 
+    fun showWrongTagAlert() {
+        _showWrongTagAlert.value = true
+    }
+
+    fun dismissWrongTagAlert() {
+        _showWrongTagAlert.value = false
+    }
+
     fun showCreateTagAlert() {
         _showCreateTagAlert.value = true
     }
@@ -162,10 +170,6 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
     fun onTagWriteResult(success: Boolean) {
         _nfcWriteDialogShown.value = false
         _nfcWriteSuccess.value = success
-    }
-
-    fun dismissWrongTagAlert() {
-        _showWrongTagAlert.value = false
     }
 
     fun dismissNfcWriteSuccessAlert() {
