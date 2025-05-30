@@ -59,40 +59,53 @@ fun BlockerScreen(
     val showScanTagAlert by viewModel.showScanTagAlert.collectAsState(initial = false)
     val writtenTags by viewModel.writtenTags.collectAsState()
     val showTagsList = remember { mutableStateOf(false) }
-    
+
     val profileManager = UndistractApp.profileManager
     val errorMessage by profileManager.errorMessage.collectAsState()
 
-    // Configure NFC reading
-    LaunchedEffect(Unit) {
-        nfcHelper.startScan { payload -> viewModel.scanTag(payload) }
+
+    // Control NFC scanning based on dialog visibility
+    LaunchedEffect(showScanTagAlert) {
+        if (showScanTagAlert) {
+            nfcHelper.startScan { payload -> viewModel.scanTag(payload) }
+            nfcHelper.enableForegroundDispatch()
+        } else {
+            nfcHelper.disableForegroundDispatch()
+        }
     }
 
-    // Handle NFC scanning lifecycle
-    DisposableEffect(nfcHelper) {
-        val lifecycleObserver = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> nfcHelper.enableForegroundDispatch()
-                Lifecycle.Event.ON_PAUSE -> nfcHelper.disableForegroundDispatch()
-                else -> {}
-            }
+//    // Handle NFC scanning lifecycle
+//    DisposableEffect(nfcHelper) {
+//        val lifecycleObserver = LifecycleEventObserver { _, event ->
+//            when (event) {
+//                Lifecycle.Event.ON_RESUME -> nfcHelper.enableForegroundDispatch()
+//                Lifecycle.Event.ON_PAUSE -> nfcHelper.disableForegroundDispatch()
+//                else -> {}
+//            }
+//        }
+//
+//        val lifecycle = (activity as LifecycleOwner).lifecycle
+//        lifecycle.addObserver(lifecycleObserver)
+//
+//        // Check for NFC intent
+//        if (NfcAdapter.ACTION_NDEF_DISCOVERED == activity.intent.action) {
+//            nfcHelper.handleIntent(activity.intent)
+//        }
+//
+//        onDispose { lifecycle.removeObserver(lifecycleObserver) }
+//    }
+
+    // Clean up NFC when component is disposed
+    DisposableEffect(Unit) {
+        onDispose {
+            nfcHelper.disableForegroundDispatch()
         }
-
-        val lifecycle = (activity as LifecycleOwner).lifecycle
-        lifecycle.addObserver(lifecycleObserver)
-
-        // Check for NFC intent
-        if (NfcAdapter.ACTION_NDEF_DISCOVERED == activity.intent.action) {
-            nfcHelper.handleIntent(activity.intent)
-        }
-
-        onDispose { lifecycle.removeObserver(lifecycleObserver) }
     }
 
     // Handle new intents
     LaunchedEffect(Unit) {
         newIntentFlow.collect { intent ->
-            if (intent?.action == NfcAdapter.ACTION_NDEF_DISCOVERED) {
+            if (intent?.action == NfcAdapter.ACTION_NDEF_DISCOVERED && showScanTagAlert) {
                 nfcHelper.handleIntent(intent)
             }
         }
@@ -138,9 +151,9 @@ fun BlockerScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(if (isBlocking) 
-                    MaterialTheme.colorScheme.errorContainer 
-                else 
+                .background(if (isBlocking)
+                    MaterialTheme.colorScheme.errorContainer
+                else
                     MaterialTheme.colorScheme.secondaryContainer
                 )
         ) {
@@ -213,8 +226,11 @@ fun BlockerScreen(
     // Alert dialogs
     if (showScanTagAlert) {
         AlertDialogWithProgress(
-            title = "Scan Your Tag",
-            text = "Please hold your Undistract NFC tag against the back of your device",
+            title = if (isBlocking) "Scan to Unblock" else "Scan to Block",
+            text = if (isBlocking)
+                "Please hold your Undistract NFC tag against your device to unblock apps"
+            else
+                "Please hold your Undistract NFC tag against your device to block distractions",
             onDismiss = { viewModel.dismissScanTagAlert() }
         )
     }
@@ -320,7 +336,7 @@ fun PulsingGlowEffect(content: @Composable () -> Unit) {
         animationSpec = infiniteRepeatable(
             animation = tween(1500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
-        ), 
+        ),
         label = "glow"
     )
 
