@@ -39,7 +39,10 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
     
     private val _showCreateTagAlert = MutableStateFlow(false)
     val showCreateTagAlert = _showCreateTagAlert.asStateFlow()
-    
+
+    private val _isWritingTag = MutableStateFlow(false)
+    val isWritingTag: StateFlow<Boolean> = _isWritingTag
+
     private val _nfcWriteSuccess = MutableStateFlow(false)
     val nfcWriteSuccess = _nfcWriteSuccess.asStateFlow()
     
@@ -156,6 +159,14 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
 
     fun showCreateTagAlert() {
         _showCreateTagAlert.value = true
+    }
+
+    fun setWritingTag(writing: Boolean) {
+        _isWritingTag.value = writing
+    }
+
+    fun cancelWrite() {
+        _isWritingTag.value = false
     }
 
     fun hideCreateTagAlert() {
