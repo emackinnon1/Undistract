@@ -35,6 +35,8 @@ import kotlinx.coroutines.flow.StateFlow
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -233,10 +235,11 @@ fun BlockerScreen(
             onConfirm = {
                 viewModel.onCreateTagConfirmed()
                 viewModel.setWritingTag(true)
-                nfcHelper.startWrite("UNDISTRACT-IS-GREAT") { success ->
+                val uniquePayload = viewModel.generateUniqueTagPayload()
+                nfcHelper.startWrite(uniquePayload) { success ->
                     viewModel.setWritingTag(false)
                     if (success) {
-                        viewModel.saveTag("UNDISTRACT-IS-GREAT")
+                        viewModel.saveTag(uniquePayload)
                     }
                     viewModel.onTagWriteResult(success)
                     viewModel.setWritingTag(false)
@@ -270,13 +273,21 @@ fun BlockerScreen(
     if (showTagsList.value) {
         TagsList(
             tags = writtenTags,
-            onClose = { showTagsList.value = false }
+            onClose = { showTagsList.value = false },
+            viewModel = viewModel
         )
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TagsList(tags: List<NfcTag>, onClose: () -> Unit) {
+fun TagsList(
+        tags: List<NfcTag>,
+        onClose: () -> Unit,
+        viewModel: BlockerViewModel
+) {
+    var tagToDelete by remember { mutableStateOf<NfcTag?>(null) }
+
     Dialog(onDismissRequest = onClose) {
         Surface(
             shape = RoundedCornerShape(16.dp),
@@ -303,6 +314,10 @@ fun TagsList(tags: List<NfcTag>, onClose: () -> Unit) {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 8.dp)
+                                    .combinedClickable(
+                                        onClick = { },
+                                        onLongClick = { tagToDelete = tag }
+                                    )
                             ) {
                                 Text(tag.payload)
                                 Text(
@@ -323,6 +338,21 @@ fun TagsList(tags: List<NfcTag>, onClose: () -> Unit) {
                 }
             }
         }
+    }
+
+    // Confirmation dialog for deletion
+    tagToDelete?.let { tag ->
+        AlertDialogWithConfirmation(
+            title = "Delete Tag",
+            text = "Are you sure you want to delete this tag? This action cannot be undone.",
+            onConfirm = {
+                viewModel.deleteTag(tag)
+                tagToDelete = null
+            },
+            onDismiss = {
+                tagToDelete = null
+            }
+        )
     }
 }
 
@@ -495,7 +525,7 @@ fun AlertDialogWithConfirmation(
         text = { Text(text) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("Create")
+                Text("Confirm")
             }
         },
         dismissButton = {
