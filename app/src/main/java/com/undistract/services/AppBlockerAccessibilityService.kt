@@ -1,7 +1,6 @@
 package com.undistract.services
 
 import android.accessibilityservice.AccessibilityService
-import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
@@ -17,6 +16,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.undistract.R
+import androidx.annotation.VisibleForTesting
+
+
 
 class AppBlockerAccessibilityService : AccessibilityService() {
     companion object {
@@ -93,7 +95,17 @@ class AppBlockerAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun getAppName(packageName: String): String {
+//    private fun getAppName(packageName: String): String {
+//        return try {
+//            val appInfo = packageManager.getApplicationInfo(packageName, 0)
+//            packageManager.getApplicationLabel(appInfo).toString()
+//        } catch (e: Exception) {
+//            packageName
+//        }
+//    }
+
+    @VisibleForTesting
+    internal fun getAppName(packageName: String): String {
         return try {
             val appInfo = packageManager.getApplicationInfo(packageName, 0)
             packageManager.getApplicationLabel(appInfo).toString()
@@ -102,7 +114,8 @@ class AppBlockerAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun removeOverlay() {
+    @VisibleForTesting
+    internal fun removeOverlay() {
         overlayView?.let {
             try {
                 windowManager?.removeView(it)
@@ -113,7 +126,8 @@ class AppBlockerAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun showBlockedAppOverlay(appName: String) {
+    @VisibleForTesting
+    internal fun showBlockedAppOverlay(appName: String) {
         // Initialize window manager if needed
         if (windowManager == null) {
             windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
