@@ -1,11 +1,9 @@
 package com.undistract.ui.main
 
 import android.accessibilityservice.AccessibilityServiceInfo
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.accessibility.AccessibilityManager
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -45,29 +43,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
-        // Process the initial intent if it's an NFC intent
-        intent?.let {
-            if (nfcHelper.isNfcIntent(it)) {
-                nfcHelper.handleIntent(it)
-            }
-        }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         newIntentFlow.value = intent
-    }
-
-    override fun onResume() {
-        super.onResume()
-        nfcHelper.enableForegroundDispatch()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        nfcHelper.disableForegroundDispatch()
     }
 
     // Helper method to check if accessibility service is enabled
@@ -81,9 +62,5 @@ class MainActivity : ComponentActivity() {
 
     private fun promptEnableAccessibilityService() {
         AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(this)
-    }
-
-    private fun showMessage(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }
