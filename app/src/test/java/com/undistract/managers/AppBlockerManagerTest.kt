@@ -103,4 +103,34 @@ class AppBlockerManagerTest {
         assertEquals(Intent.FLAG_ACTIVITY_NEW_TASK, overlayIntent.flags)
         assertEquals("package:com.undistract", overlayIntent.data.toString())
     }
+
+    @Test
+    fun blockingStateManagement_loadsAndPersistsState() {
+        // Set up shared preferences mock
+        val editor = Mockito.mock(android.content.SharedPreferences.Editor::class.java)
+        val prefs = Mockito.mock(android.content.SharedPreferences::class.java)
+
+        `when`(context.getSharedPreferences("app_blocker_prefs", Context.MODE_PRIVATE)).thenReturn(prefs)
+        `when`(prefs.edit()).thenReturn(editor)
+        `when`(editor.putBoolean(Mockito.anyString(), Mockito.anyBoolean())).thenReturn(editor)
+
+        // Test initial loading - set SharedPreferences to return true for isBlocking
+        `when`(prefs.getBoolean("isBlocking", false)).thenReturn(true)
+
+        // Create manager which will load state in init
+        appBlockerManager = AppBlockerManager(context)
+
+        // Verify initial state was loaded correctly
+        assertEquals(true, appBlockerManager.isBlocking.value)
+
+        // Test saving state - change the state and verify SharedPreferences was updated
+        appBlockerManager.setBlockingState(false)
+
+        // Verify the new state
+        assertEquals(false, appBlockerManager.isBlocking.value)
+
+        // Verify the state was saved to SharedPreferences
+        Mockito.verify(editor).putBoolean("isBlocking", false)
+        Mockito.verify(editor).apply()
+    }
 }
