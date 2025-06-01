@@ -1,8 +1,3 @@
-//5. Blocking State Setting: Explicitly sets the blocking state and persists it.
-//6. Blocking Settings Application: Starts or stops the blocking service with the list of blocked apps based on the current state.
-
-
-
 package com.undistract.managers
 
 import android.app.AppOpsManager
@@ -233,5 +228,52 @@ class AppBlockerManagerTest {
         // Verify state was persisted to SharedPreferences again (now a total of 2 calls)
         Mockito.verify(editor).putBoolean("isBlocking", false)
         Mockito.verify(editor, Mockito.times(2)).apply()
+    }
+
+    @Test
+    fun applyBlockingSettings_startsOrStopsServiceBasedOnState() {
+        // Set up mock Profile with blocked apps
+        val profile = Mockito.mock(Profile::class.java)
+        val blockedApps = listOf("com.example.app1", "com.example.app2")
+        `when`(profile.appPackageNames).thenReturn(blockedApps)
+
+        // Set up SharedPreferences mock
+        val editor = Mockito.mock(android.content.SharedPreferences.Editor::class.java)
+        val prefs = Mockito.mock(android.content.SharedPreferences::class.java)
+        `when`(context.getSharedPreferences("app_blocker_prefs", Context.MODE_PRIVATE)).thenReturn(prefs)
+        `when`(prefs.edit()).thenReturn(editor)
+        `when`(editor.putBoolean(Mockito.anyString(), Mockito.anyBoolean())).thenReturn(editor)
+
+        // Test case 1: Initialize with blocking disabled
+        `when`(prefs.getBoolean("isBlocking", false)).thenReturn(false)
+        appBlockerManager = AppBlockerManager(context)
+
+        // Apply settings with blocking disabled - should stop service
+        appBlockerManager.applyBlockingSettings(profile)
+
+        // Verify service was stopped and not started
+        Mockito.verify(context).stopService(Mockito.any(Intent::class.java))
+        Mockito.verify(context, Mockito.never()).startService(Mockito.any(Intent::class.java))
+
+        // Reset verification counts
+        Mockito.clearInvocations(context)
+
+        // Test case 2: Change to blocking enabled
+        appBlockerManager.setBlockingState(true)
+
+        // Apply settings with blocking enabled - should start service
+        appBlockerManager.applyBlockingSettings(profile)
+
+        // Verify service was started with correct apps list
+        val intentCaptor = ArgumentCaptor.forClass(Intent::class.java)
+        Mockito.verify(context).startService(intentCaptor.capture())
+        val capturedIntent = intentCaptor.value
+
+        // Check the blocked apps list was passed correctly
+        val capturedApps = capturedIntent.getSerializableExtra("BLOCKED_APPS") as ArrayList<*>
+        assertEquals(blockedApps, capturedApps)
+
+        // Verify service was not stopped again
+        Mockito.verify(context, Mockito.never()).stopService(Mockito.any(Intent::class.java))
     }
 }
