@@ -1,7 +1,3 @@
-//The AppBlockerManager class provides the following areas of functionality:
-//2. Authorization Requesting: Launches system activities to request the necessary permissions from the user.
-//3. Blocking State Management: Maintains and persists the blocking state (enabled/disabled) using SharedPreferences.
-//4. Blocking Toggle: Toggles the blocking state and applies blocking settings for a given profile.
 //5. Blocking State Setting: Explicitly sets the blocking state and persists it.
 //6. Blocking Settings Application: Starts or stops the blocking service with the list of blocked apps based on the current state.
 
@@ -199,5 +195,43 @@ class AppBlockerManagerTest {
             // Verify service was stopped
             Mockito.verify(context).stopService(Mockito.any(Intent::class.java))
         }
+    }
+
+    @Test
+    fun setBlockingState_updatesStateAndPersistsIt() {
+        // Set up shared preferences mock
+        val editor = Mockito.mock(android.content.SharedPreferences.Editor::class.java)
+        val prefs = Mockito.mock(android.content.SharedPreferences::class.java)
+
+        `when`(context.getSharedPreferences("app_blocker_prefs", Context.MODE_PRIVATE)).thenReturn(prefs)
+        `when`(prefs.edit()).thenReturn(editor)
+        `when`(editor.putBoolean(Mockito.anyString(), Mockito.anyBoolean())).thenReturn(editor)
+
+        // Initialize with a known state (false)
+        `when`(prefs.getBoolean("isBlocking", false)).thenReturn(false)
+        appBlockerManager = AppBlockerManager(context)
+
+        // Initial state should be false
+        assertEquals(false, appBlockerManager.isBlocking.value)
+
+        // Act - set blocking state to true
+        appBlockerManager.setBlockingState(true)
+
+        // Assert - state is updated
+        assertEquals(true, appBlockerManager.isBlocking.value)
+
+        // Verify state was persisted to SharedPreferences (first call)
+        Mockito.verify(editor).putBoolean("isBlocking", true)
+        Mockito.verify(editor, Mockito.times(1)).apply()
+
+        // Act again - set blocking state to false
+        appBlockerManager.setBlockingState(false)
+
+        // Assert - state is updated again
+        assertEquals(false, appBlockerManager.isBlocking.value)
+
+        // Verify state was persisted to SharedPreferences again (now a total of 2 calls)
+        Mockito.verify(editor).putBoolean("isBlocking", false)
+        Mockito.verify(editor, Mockito.times(2)).apply()
     }
 }
