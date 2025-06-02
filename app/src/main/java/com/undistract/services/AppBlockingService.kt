@@ -4,9 +4,9 @@ import android.app.Service
 import android.app.usage.UsageStatsManager
 import android.content.Intent
 import android.os.IBinder
-import android.view.WindowManager
 import kotlinx.coroutines.cancel
 import com.undistract.ui.main.MainActivity
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -14,7 +14,20 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-class AppBlockingService : Service() {
+open class AppBlockingService(
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Default
+) : Service() {
+    // Use the injected dispatcher
+    private val serviceScope = CoroutineScope(dispatcher + SupervisorJob())
+    private lateinit var usageStatsManager: UsageStatsManager
+
+    // Change from private to protected
+    protected var _isMonitoring = false
+    internal val isMonitoring: Boolean get() = _isMonitoring
+
+    // Expose a method to check if scope is active (for testing)
+    internal fun isScopeActive() = serviceScope.isActive
+
     companion object {
         private const val MONITORING_INTERVAL_MS = 500L
         private const val USAGE_STATS_WINDOW_MS = 5000L
@@ -22,9 +35,6 @@ class AppBlockingService : Service() {
         const val EXTRA_SHOW_BLOCKER = "SHOW_BLOCKER"
         const val EXTRA_BLOCKED_PACKAGE = "BLOCKED_PACKAGE"
     }
-    
-    private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private lateinit var usageStatsManager: UsageStatsManager
     private var blockedPackages: List<String> = emptyList()
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -42,7 +52,10 @@ class AppBlockingService : Service() {
         return START_STICKY
     }
 
-    private suspend fun monitorApps() {
+// Make monitorApps internal and open for testing
+internal open suspend fun monitorApps() {
+    _isMonitoring = true
+    try {
         while (serviceScope.isActive) {
             try {
                 getCurrentForegroundApp()?.takeIf { it in blockedPackages }?.let {
@@ -53,7 +66,10 @@ class AppBlockingService : Service() {
             }
             delay(MONITORING_INTERVAL_MS)
         }
+    } finally {
+        _isMonitoring = false
     }
+}
 
     private fun getCurrentForegroundApp(): String? {
         val now = System.currentTimeMillis()
@@ -77,5 +93,9 @@ class AppBlockingService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
+    }
+
+    internal fun setIsMonitoring(value: Boolean) {
+        _isMonitoring = value
     }
 }
