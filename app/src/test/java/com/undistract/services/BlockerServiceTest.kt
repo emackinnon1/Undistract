@@ -16,7 +16,7 @@ import org.robolectric.annotation.Config
 import org.junit.Assert.*
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [Build.VERSION_CODES.P])
+@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 class BlockerServiceTest {
 
     private lateinit var service: BlockerService

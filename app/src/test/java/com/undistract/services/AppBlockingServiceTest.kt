@@ -3,6 +3,7 @@ package com.undistract.services
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.every
 import io.mockk.coEvery
@@ -26,7 +27,7 @@ import org.robolectric.annotation.Config
 
 
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [34])
+@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 @ExperimentalCoroutinesApi
 class AppBlockingServiceTest {
 

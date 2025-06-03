@@ -31,13 +31,14 @@ import android.app.Application
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
+import android.os.Build
 import android.provider.Settings
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowToast
 
 
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [34])
+@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 class AppBlockerAccessibilityServiceTest {
 
     private lateinit var serviceController: ServiceController<AppBlockerAccessibilityService>
