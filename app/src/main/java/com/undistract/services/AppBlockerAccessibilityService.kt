@@ -19,7 +19,9 @@ import com.undistract.R
 import androidx.annotation.VisibleForTesting
 
 
-
+/**
+ * Uses Accessibility API to intercept app launches and block them
+ */
 class AppBlockerAccessibilityService : AccessibilityService() {
     companion object {
         const val ACTION_UPDATE_BLOCKED_APPS = "com.undistract.UPDATE_BLOCKED_APPS"
@@ -94,15 +96,6 @@ class AppBlockerAccessibilityService : AccessibilityService() {
             performGlobalAction(GLOBAL_ACTION_HOME)
         }
     }
-
-//    private fun getAppName(packageName: String): String {
-//        return try {
-//            val appInfo = packageManager.getApplicationInfo(packageName, 0)
-//            packageManager.getApplicationLabel(appInfo).toString()
-//        } catch (e: Exception) {
-//            packageName
-//        }
-//    }
 
     @VisibleForTesting
     internal fun getAppName(packageName: String): String {

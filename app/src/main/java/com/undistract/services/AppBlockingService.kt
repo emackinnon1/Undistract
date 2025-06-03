@@ -14,6 +14,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+
+/**
+ * Uses UsageStats API to monitor foreground apps and block them.
+ * Uses a CoroutineScope with a SupervisorJob for structured concurrency.
+ *
+ * @property dispatcher The CoroutineDispatcher to use for launching coroutines.
+ */
 open class AppBlockingService(
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : Service() {
