@@ -1,16 +1,3 @@
-//The BlockerService class is a relatively simple Android service with the following main areas of functionality:
-//1.Intent Handling:
-//ACTION_START_BLOCKING: Starts blocking specified app packages
-//ACTION_STOP_BLOCKING: Stops all app blocking
-
-//2. State Management and Broadcasting:
-//Updates blocking state based on received intents
-//Uses LocalBroadcastManager to notify the AppBlockerAccessibilityService about changes
-//Passes along the list of packages to block and the blocking state
-
-//3. Lifecycle Management:
-//Standard Service lifecycle handling (onBind, onStartCommand)
-
 package com.undistract.services
 
 import android.app.Service
@@ -130,5 +117,86 @@ class BlockerServiceTest {
         assertTrue(actualIntent.getBooleanExtra(AppBlockerAccessibilityService.EXTRA_IS_BLOCKING, false))
     }
 
+    @Test
+    fun `service correctly updates and broadcasts state changes`() {
+        // Step 1: Start blocking with initial packages
+        val initialPackages = arrayListOf("com.example.app1", "com.example.app2")
+        val startIntent1 = Intent(BlockerService.ACTION_START_BLOCKING).apply {
+            putStringArrayListExtra(BlockerService.EXTRA_APP_PACKAGES, initialPackages)
+        }
 
+        service.onStartCommand(startIntent1, 0, 1)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // Verify first broadcast
+        assertNotNull("First broadcast should have been sent", receivedIntent)
+        val firstBroadcast = receivedIntent!!
+        assertEquals(AppBlockerAccessibilityService.ACTION_UPDATE_BLOCKED_APPS, firstBroadcast.action)
+        assertEquals(initialPackages, firstBroadcast.getStringArrayListExtra(AppBlockerAccessibilityService.EXTRA_APP_PACKAGES))
+        assertTrue(firstBroadcast.getBooleanExtra(AppBlockerAccessibilityService.EXTRA_IS_BLOCKING, false))
+
+        // Step 2: Update with different packages
+        val updatedPackages = arrayListOf("com.example.app3")
+        val startIntent2 = Intent(BlockerService.ACTION_START_BLOCKING).apply {
+            putStringArrayListExtra(BlockerService.EXTRA_APP_PACKAGES, updatedPackages)
+        }
+
+        // Reset receivedIntent to verify only the new broadcast
+        receivedIntent = null
+
+        service.onStartCommand(startIntent2, 0, 2)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // Verify second broadcast
+        assertNotNull("Second broadcast should have been sent", receivedIntent)
+        val secondBroadcast = receivedIntent!!
+        assertEquals(AppBlockerAccessibilityService.ACTION_UPDATE_BLOCKED_APPS, secondBroadcast.action)
+        assertEquals(updatedPackages, secondBroadcast.getStringArrayListExtra(AppBlockerAccessibilityService.EXTRA_APP_PACKAGES))
+        assertTrue(secondBroadcast.getBooleanExtra(AppBlockerAccessibilityService.EXTRA_IS_BLOCKING, false))
+
+        // Step 3: Stop blocking
+        val stopIntent = Intent(BlockerService.ACTION_STOP_BLOCKING)
+
+        // Reset receivedIntent again
+        receivedIntent = null
+
+        service.onStartCommand(stopIntent, 0, 3)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // Verify third broadcast
+        assertNotNull("Final broadcast should have been sent", receivedIntent)
+        val finalBroadcast = receivedIntent!!
+        assertEquals(AppBlockerAccessibilityService.ACTION_UPDATE_BLOCKED_APPS, finalBroadcast.action)
+        val finalPackages = finalBroadcast.getStringArrayListExtra(AppBlockerAccessibilityService.EXTRA_APP_PACKAGES)
+        assertNotNull("Packages list should not be null", finalPackages)
+        assertTrue("Packages list should be empty", finalPackages!!.isEmpty())
+        assertFalse(finalBroadcast.getBooleanExtra(AppBlockerAccessibilityService.EXTRA_IS_BLOCKING, true))
+    }
+
+    @Test
+    fun `onBind returns null`() {
+        // Act
+        val result = service.onBind(Intent())
+
+        // Assert
+        assertNull("onBind should return null as the service is not bindable", result)
+    }
+
+    @Test
+    fun `onStartCommand returns START_STICKY for all intent types`() {
+        // The existing tests already verify this for specific intents
+        // This test verifies it for an unknown action type
+
+        // Arrange
+        val intentWithUnknownAction = Intent("com.undistract.UNKNOWN_ACTION")
+
+        // Act
+        val result = service.onStartCommand(intentWithUnknownAction, 0, 1)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // Assert
+        assertEquals(Service.START_STICKY, result)
+        // No broadcast should be sent for unknown action
+        assertNull(receivedIntent)
+    }
 }
