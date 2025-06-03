@@ -6,6 +6,9 @@ import android.os.IBinder
 import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
+/**
+ * Handles intents to start/stop blocking and broadcasts updates to the AccessibilityServic
+ */
 class BlockerService : Service() {
     companion object {
         private const val TAG = "BlockerService"
