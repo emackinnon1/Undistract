@@ -1,31 +1,3 @@
-//Looking at the BlockerScreen composable function, I can identify these main functional areas:
-// DONE
-//1.Blocking State Management:
-//Toggling between blocked and unblocked states
-//Displaying different UI elements based on blocking state
-//Integration with the ProfilesPicker when not blocking
-// DONE
-//2.NFC Tag Operations:
-//Scanning NFC tags to toggle blocking
-//Creating new NFC tags
-//Displaying and managing existing tags
-//Deleting tags
-// DONE
-//3.Dialog Management:
-//Showing/dismissing multiple alert dialogs
-//Progress indicators for NFC operations
-//Error messages and confirmations
-// DONE
-//4.NFC Helper Integration:
-//Enabling/disabling foreground dispatch
-//Handling NFC intents
-//Managing NFC hardware availability
-
-//5.UI Effects and Animations:
-//Pulsing glow effects
-//Animated transitions between blocking states
-//To test this effectively, we'll need to create tests that focus on how the UI responds to different states and events from the ViewModel, as well as how it interacts with the NfcHelper.
-
 package com.undistract.ui.blocking
 
 import android.content.Intent
