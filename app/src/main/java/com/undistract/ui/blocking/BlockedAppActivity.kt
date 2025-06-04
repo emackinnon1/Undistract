@@ -5,6 +5,10 @@ import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
 
+/**
+ * Activity that is displayed when the user tries to open a blocked app.
+ * It finishes itself after a short delay to prevent the user from interacting with it.
+ */
 class BlockedAppActivity : AppCompatActivity() {
     
     companion object {

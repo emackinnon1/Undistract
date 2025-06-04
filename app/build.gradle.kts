@@ -82,4 +82,5 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.jetbrains.kotlinx.coroutines.core)
+    testImplementation(libs.ui.test.junit4)
 }
