@@ -37,8 +37,15 @@ import java.util.Date
 import java.util.Locale
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.platform.testTag
 
-
+/** * Composable function for the Blocker screen, which allows users to block or unblock apps using NFC tags.
+ * It provides a UI for scanning NFC tags, creating new tags, and managing existing tags.
+ *
+ * @param nfcHelper The NfcHelper instance to manage NFC operations.
+ * @param newIntentFlow Flow of new intents received by the NFC helper.
+ * @param viewModel The BlockerViewModel instance to manage state and business logic.
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun BlockerScreen(
@@ -202,7 +209,7 @@ fun BlockerScreen(
                     enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                     exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
                 ) {
-                    ProfilesPicker(profileManager = UndistractApp.profileManager)
+                    ProfilesPicker(profileManager = UndistractApp.profileManager, modifier = Modifier.testTag("ProfilesPicker"))
                 }
             }
         }
@@ -279,6 +286,13 @@ fun BlockerScreen(
     }
 }
 
+/** Composable function to display a list of NFC tags with options to delete them.
+ * It shows a dialog with the list of tags, their creation date, and allows deletion via long press.
+ *
+ * @param tags List of NFC tags to display.
+ * @param onClose Callback to close the dialog.
+ * @param viewModel The BlockerViewModel instance to manage state and business logic.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TagsList(
@@ -356,6 +370,11 @@ fun TagsList(
     }
 }
 
+/** Composable function to create a pulsing glow effect around content.
+ * It uses an infinite transition to animate the alpha value of the glow.
+ *
+ * @param content The composable content to display inside the pulsing glow effect.
+ */
 @Composable
 fun PulsingGlowEffect(content: @Composable () -> Unit) {
     val infiniteTransition = rememberInfiniteTransition(label = "glow")
@@ -383,6 +402,11 @@ fun PulsingGlowEffect(content: @Composable () -> Unit) {
     }
 }
 
+/** Composable function to draw a glowing border around content.
+ * It uses the drawBehind modifier to create a custom border with multiple layers of color and alpha.
+ *
+ * @param content The composable content to display inside the glowing border.
+ */
 @Composable
 fun GlowingBorder(content: @Composable () -> Unit) {
     val density = LocalDensity.current
@@ -417,7 +441,14 @@ fun GlowingBorder(content: @Composable () -> Unit) {
     }
 }
 
-// Reusable Alert Dialog Components
+/** Composable function to display an alert dialog with a glowing border.
+ * It shows a title, text, and a confirm button, with a custom background and glow effect.
+ *
+ * @param title The title of the dialog.
+ * @param text The message text of the dialog.
+ * @param onDismiss Callback to dismiss the dialog.
+ * @param confirmButtonText Text for the confirm button, defaults to "OK".
+ */
 @Composable
 fun AlertDialogWithGlow(
     title: String,
@@ -461,6 +492,13 @@ fun AlertDialogWithGlow(
     }
 }
 
+/** Composable function to display an alert dialog with a progress indicator.
+ * It shows a title, text, and a cancel button, with a custom background and progress indicator.
+ *
+ * @param title The title of the dialog.
+ * @param text The message text of the dialog.
+ * @param onDismiss Callback to dismiss the dialog.
+ */
 @Composable
 fun AlertDialogWithProgress(
     title: String,
@@ -488,6 +526,13 @@ fun AlertDialogWithProgress(
     )
 }
 
+/** Composable function to display an alert dialog with a message and a confirm button.
+ * It shows a title, text, and a confirm button, with a custom background.
+ *
+ * @param title The title of the dialog.
+ * @param text The message text of the dialog.
+ * @param onConfirm Callback to confirm the action.
+ */
 @Composable
 fun AlertDialogWithMessage(
     title: String,
@@ -509,6 +554,15 @@ fun AlertDialogWithMessage(
     )
 }
 
+
+/** Composable function to display an alert dialog with confirmation buttons.
+ * It shows a title, text, and confirm/cancel buttons, with a custom background.
+ *
+ * @param title The title of the dialog.
+ * @param text The message text of the dialog.
+ * @param onConfirm Callback to confirm the action.
+ * @param onDismiss Callback to dismiss the dialog.
+ */
 @Composable
 fun AlertDialogWithConfirmation(
     title: String,
@@ -536,6 +590,12 @@ fun AlertDialogWithConfirmation(
     )
 }
 
+/** Formats a timestamp into a human-readable date string.
+ * Uses SimpleDateFormat to format the date in "MMM dd, yyyy HH:mm" format.
+ *
+ * @param timestamp The timestamp in milliseconds to format.
+ * @return A formatted date string.
+ */
 private fun formatDate(timestamp: Long): String {
     val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
     return sdf.format(Date(timestamp))
