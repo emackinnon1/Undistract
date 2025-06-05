@@ -80,7 +80,9 @@ dependencies {
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.junit.v115)
     testImplementation(libs.mockk)
+    testImplementation(libs.mockk.android)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.jetbrains.kotlinx.coroutines.core)
     testImplementation(libs.ui.test.junit4)
+    testImplementation(libs.androidx.core.testing)
 }
