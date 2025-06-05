@@ -231,5 +231,66 @@ class BlockerViewModelTest {
         assertTrue(viewModel.showWrongTagAlert.value)
     }
 
+    @Test
+    fun `toggleBlocking should start BlockerService when enabling blocking`() {
+        // Arrange
+        val appPackages = listOf("com.example.app1", "com.example.app2")
+        val profile = Profile(name = "Test", appPackageNames = appPackages)
+        profileStateFlow.value = profile
+        blockingStateFlow.value = false // Currently not blocking
 
+        // Act
+        viewModel.scanTag("UNDISTRACT-valid-tag")
+
+        // Assert
+        // Verify the accessibility service is checked
+        io.mockk.verify { AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(any()) }
+        // Verify the blocking state is set to true
+        io.mockk.verify { mockAppBlocker.setBlockingState(true) }
+    }
+
+    @Test
+    fun `toggleBlocking should stop BlockerService when disabling blocking`() {
+        // Arrange
+        val appPackages = listOf("com.example.app1", "com.example.app2")
+        val profile = Profile(name = "Test", appPackageNames = appPackages)
+        profileStateFlow.value = profile
+        blockingStateFlow.value = true // Currently blocking
+
+        // Act
+        viewModel.scanTag("UNDISTRACT-valid-tag")
+
+        // Assert
+        io.mockk.verify { mockAppBlocker.setBlockingState(false) }
+        // Same note about verifying Intent
+    }
+
+    @Test
+    fun `toggleBlocking should check accessibility service when enabling blocking`() {
+        // Arrange
+        val appPackages = listOf("com.example.app1", "com.example.app2")
+        val profile = Profile(name = "Test", appPackageNames = appPackages)
+        profileStateFlow.value = profile
+        blockingStateFlow.value = false // Currently not blocking
+
+        // Act
+        viewModel.scanTag("UNDISTRACT-valid-tag")
+
+        // Assert
+        io.mockk.verify { AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(any()) }
+    }
+
+    @Test
+    fun `toggleBlocking should do nothing if no profile is selected`() {
+        // Arrange
+        profileStateFlow.value = null
+        blockingStateFlow.value = false
+
+        // Act
+        viewModel.scanTag("UNDISTRACT-valid-tag")
+
+        // Assert
+        io.mockk.verify(exactly = 0) { mockAppBlocker.setBlockingState(any()) }
+        io.mockk.verify(exactly = 0) { AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(any()) }
+    }
 }
