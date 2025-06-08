@@ -5,12 +5,12 @@
 //   - Saving new NFC tags
 //   - Deleting tags
 //   - Scanning and validating tags
-// IN PROGRESS
+// DONE
 //2. **App Blocking Control**
 //   - Toggling blocking state
 //   - Starting the BlockerService with appropriate app packages
 //   - Stopping the BlockerService
-//
+// DONE
 //3. **Dialog State Management**
 //   - Managing various alert dialogs (scan tag, wrong tag, create tag)
 //   - NFC write process states (writing, success/failure)
@@ -292,5 +292,162 @@ class BlockerViewModelTest {
         // Assert
         io.mockk.verify(exactly = 0) { mockAppBlocker.setBlockingState(any()) }
         io.mockk.verify(exactly = 0) { AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(any()) }
+    }
+
+    @Test
+    fun `showScanTagAlert should set showScanTagAlert state to true`() {
+        // Arrange - initial state should be false
+        assertEquals(false, viewModel.showScanTagAlert.value)
+
+        // Act
+        viewModel.showScanTagAlert()
+
+        // Assert
+        assertEquals(true, viewModel.showScanTagAlert.value)
+    }
+
+    @Test
+    fun `dismissScanTagAlert should set showScanTagAlert state to false`() {
+        // Arrange - set initial state to true
+        viewModel.showScanTagAlert()
+        assertEquals(true, viewModel.showScanTagAlert.value)
+
+        // Act
+        viewModel.dismissScanTagAlert()
+
+        // Assert
+        assertEquals(false, viewModel.showScanTagAlert.value)
+    }
+
+    @Test
+    fun `showWrongTagAlert should set showWrongTagAlert state to true`() {
+        // Arrange - initial state should be false
+        assertEquals(false, viewModel.showWrongTagAlert.value)
+
+        // Act
+        viewModel.showWrongTagAlert()
+
+        // Assert
+        assertEquals(true, viewModel.showWrongTagAlert.value)
+    }
+
+    @Test
+    fun `dismissWrongTagAlert should set showWrongTagAlert state to false`() {
+        // Arrange - set initial state to true
+        viewModel.showWrongTagAlert()
+        assertEquals(true, viewModel.showWrongTagAlert.value)
+
+        // Act
+        viewModel.dismissWrongTagAlert()
+
+        // Assert
+        assertEquals(false, viewModel.showWrongTagAlert.value)
+    }
+
+    @Test
+    fun `showCreateTagAlert should set showCreateTagAlert state to true`() {
+        // Arrange - initial state should be false
+        assertEquals(false, viewModel.showCreateTagAlert.value)
+
+        // Act
+        viewModel.showCreateTagAlert()
+
+        // Assert
+        assertEquals(true, viewModel.showCreateTagAlert.value)
+    }
+
+    @Test
+    fun `hideCreateTagAlert should set showCreateTagAlert state to false`() {
+        // Arrange - set initial state to true
+        viewModel.showCreateTagAlert()
+        assertEquals(true, viewModel.showCreateTagAlert.value)
+
+        // Act
+        viewModel.hideCreateTagAlert()
+
+        // Assert
+        assertEquals(false, viewModel.showCreateTagAlert.value)
+    }
+
+    @Test
+    fun `setWritingTag should update isWritingTag state`() {
+        // Arrange - initial state should be false
+        assertEquals(false, viewModel.isWritingTag.value)
+
+        // Act
+        viewModel.setWritingTag(true)
+
+        // Assert
+        assertEquals(true, viewModel.isWritingTag.value)
+    }
+
+    @Test
+    fun `cancelWrite should set isWritingTag state to false`() {
+        // Arrange - set initial state to true
+        viewModel.setWritingTag(true)
+        assertEquals(true, viewModel.isWritingTag.value)
+
+        // Act
+        viewModel.cancelWrite()
+
+        // Assert
+        assertEquals(false, viewModel.isWritingTag.value)
+    }
+
+    @Test
+    fun `onCreateTagConfirmed should update dialog states correctly`() {
+        // Arrange - set initial state
+        viewModel.showCreateTagAlert()
+        assertEquals(true, viewModel.showCreateTagAlert.value)
+        assertEquals(false, viewModel.nfcWriteDialogShown.value)
+
+        // Act
+        viewModel.onCreateTagConfirmed()
+
+        // Assert
+        assertEquals(false, viewModel.showCreateTagAlert.value)
+        assertEquals(true, viewModel.nfcWriteDialogShown.value)
+    }
+
+    @Test
+    fun `onTagWriteResult should update states with success result`() {
+        // Arrange - set initial state
+        viewModel.onCreateTagConfirmed()
+        assertEquals(true, viewModel.nfcWriteDialogShown.value)
+        assertEquals(false, viewModel.nfcWriteSuccess.value)
+
+        // Act
+        viewModel.onTagWriteResult(true)
+
+        // Assert
+        assertEquals(false, viewModel.nfcWriteDialogShown.value)
+        assertEquals(true, viewModel.nfcWriteSuccess.value)
+    }
+
+    @Test
+    fun `onTagWriteResult should update states with failure result`() {
+        // Arrange - set initial state
+        viewModel.onCreateTagConfirmed()
+        assertEquals(true, viewModel.nfcWriteDialogShown.value)
+
+        // Act
+        viewModel.onTagWriteResult(false)
+
+        // Assert
+        assertEquals(false, viewModel.nfcWriteDialogShown.value)
+        assertEquals(false, viewModel.nfcWriteSuccess.value)
+    }
+
+    @Test
+    fun `dismissNfcWriteSuccessAlert should set nfcWriteSuccess to false`() {
+        // Arrange - set initial state to success
+        viewModel.onTagWriteResult(true)
+        assertEquals(true, viewModel.nfcWriteSuccess.value)
+
+        // Act
+        viewModel.dismissNfcWriteSuccessAlert()
+
+        // Assert
+        assertEquals(false, viewModel.nfcWriteSuccess.value)
     }
 }
