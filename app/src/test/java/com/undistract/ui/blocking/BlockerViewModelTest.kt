@@ -14,21 +14,13 @@
 //3. **Dialog State Management**
 //   - Managing various alert dialogs (scan tag, wrong tag, create tag)
 //   - NFC write process states (writing, success/failure)
-//
+// IN PROGRESS
 //4. **Tag Generation**
 //   - Creating unique tag payloads with proper formatting
 
-//To test this ViewModel effectively, we'll need to mock several dependencies:
-//- SharedPreferences
-//- AppBlockerManager
-//- ProfileManager
-//- Application context
-//
-//Let me know which area you'd like to start testing first, and we can create the appropriate test cases.
 
 package com.undistract.ui.blocking
 
-import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
@@ -62,6 +54,7 @@ import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+
 
 @ExperimentalCoroutinesApi
 @RunWith(RobolectricTestRunner::class)
@@ -538,5 +531,75 @@ class BlockerViewModelTest {
 
         // Assert
         assertEquals(false, viewModel.isWritingTag.value)
+    }
+
+    @Test
+    fun `generateUniqueTagPayload should follow correct format`() {
+        // Act
+        val payload = viewModel.generateUniqueTagPayload()
+
+        // Assert
+        // Format should be UNDISTRACT-timestamp-random
+        val parts = payload.split("-")
+        assertEquals(3, parts.size)
+        assertEquals("UNDISTRACT", parts[0])
+
+        // Second part should be a numeric timestamp
+        val timestamp = parts[1].toLongOrNull()
+        assertTrue("Timestamp should be a valid number", timestamp != null)
+
+        // Third part should be a 4-digit number
+        val random = parts[2].toIntOrNull()
+        assertTrue("Random part should be a valid number", random != null)
+        assertTrue("Random part should be at least 1000", random!! >= 1000)
+        assertTrue("Random part should be less than 10000", random < 10000)
+    }
+
+    @Test
+    fun `generateUniqueTagPayload should create unique tags`() {
+        // Act
+        val payload1 = viewModel.generateUniqueTagPayload()
+        val payload2 = viewModel.generateUniqueTagPayload()
+        val payload3 = viewModel.generateUniqueTagPayload()
+
+        // Assert
+        // All generated payloads should be different
+        assertTrue(payload1 != payload2)
+        assertTrue(payload1 != payload3)
+        assertTrue(payload2 != payload3)
+    }
+
+    @Test
+    fun `generateUniqueTagPayload should create valid tag for scanning`() {
+        // Act
+        val payload = viewModel.generateUniqueTagPayload()
+
+        // Assert
+        // Generated payload should be recognized as a valid tag when scanning
+        assertTrue(payload.startsWith("UNDISTRACT"))
+
+        // Test that this tag would be recognized by the scanTag method
+        viewModel.scanTag(payload)
+        // If it's valid, it would trigger blocking toggle, not wrong tag alert
+        assertEquals(false, viewModel.showWrongTagAlert.value)
+    }
+
+    @Test
+    fun `generateUniqueTagPayload components should be extractable`() {
+        // Act
+        val payload = viewModel.generateUniqueTagPayload()
+        val parts = payload.split("-")
+
+        // Assert we can extract individual components
+        val prefix = parts[0]
+        val timestamp = parts[1].toLong()
+        val random = parts[2].toInt()
+
+        assertEquals("UNDISTRACT", prefix)
+        assertTrue(timestamp > 0)
+        assertTrue(random in 1000..9999)
+
+        // Components should combine back to original
+        assertEquals(payload, "$prefix-$timestamp-$random")
     }
 }
