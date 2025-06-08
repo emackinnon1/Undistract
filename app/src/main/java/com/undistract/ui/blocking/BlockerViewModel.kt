@@ -165,6 +165,8 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
 
     // Dialog management functions
     fun showScanTagAlert() {
+        _showWrongTagAlert.value = false
+        _showCreateTagAlert.value = false
         _showScanTagAlert.value = true
     }
 
@@ -173,6 +175,8 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun showWrongTagAlert() {
+        _showScanTagAlert.value = false
+        _showCreateTagAlert.value = false
         _showWrongTagAlert.value = true
     }
 
@@ -181,6 +185,8 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun showCreateTagAlert() {
+        _showScanTagAlert.value = false
+        _showWrongTagAlert.value = false
         _showCreateTagAlert.value = true
     }
 

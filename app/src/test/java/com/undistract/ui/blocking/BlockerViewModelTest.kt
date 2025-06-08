@@ -450,4 +450,93 @@ class BlockerViewModelTest {
         // Assert
         assertEquals(false, viewModel.nfcWriteSuccess.value)
     }
+
+    @Test
+    fun `dialog states are mutually exclusive`() {
+        // Act - Show all dialogs one after another
+        viewModel.showScanTagAlert()
+        viewModel.showWrongTagAlert()
+        viewModel.showCreateTagAlert()
+
+        // Assert - Only the last shown dialog should be visible
+        assertEquals(true, viewModel.showCreateTagAlert.value)
+        assertEquals(false, viewModel.showScanTagAlert.value)
+        assertEquals(false, viewModel.showWrongTagAlert.value)
+    }
+
+    @Test
+    fun `dismissing one dialog should not affect other dialog states`() {
+        // Arrange - show create tag alert, then set writing tag
+        viewModel.showCreateTagAlert()
+        viewModel.setWritingTag(true)
+
+        // Act
+        viewModel.hideCreateTagAlert()
+
+        // Assert - only the specific dialog should be dismissed
+        assertEquals(false, viewModel.showCreateTagAlert.value)
+        assertEquals(true, viewModel.isWritingTag.value)
+    }
+
+    @Test
+    fun `dialog states should reset after failed write operation`() {
+        // Arrange - setup write operation flow
+        viewModel.showCreateTagAlert()
+        viewModel.onCreateTagConfirmed()
+
+        // Act - simulate write failure
+        viewModel.onTagWriteResult(false)
+
+        // Assert - all dialog states should be properly reset
+        assertEquals(false, viewModel.nfcWriteDialogShown.value)
+        assertEquals(false, viewModel.showCreateTagAlert.value)
+        assertEquals(false, viewModel.nfcWriteSuccess.value)
+        assertEquals(false, viewModel.isWritingTag.value)
+    }
+
+    @Test
+    fun `complete tag write workflow should transition states correctly`() {
+        // Test the entire workflow from start to finish
+
+        // Start with all states false
+        assertEquals(false, viewModel.showCreateTagAlert.value)
+        assertEquals(false, viewModel.nfcWriteDialogShown.value)
+        assertEquals(false, viewModel.nfcWriteSuccess.value)
+        assertEquals(false, viewModel.isWritingTag.value)
+
+        // Step 1: Show create tag dialog
+        viewModel.showCreateTagAlert()
+        assertEquals(true, viewModel.showCreateTagAlert.value)
+
+        // Step 2: Confirm tag creation
+        viewModel.onCreateTagConfirmed()
+        assertEquals(false, viewModel.showCreateTagAlert.value)
+        assertEquals(true, viewModel.nfcWriteDialogShown.value)
+
+        // Step 3: Start writing
+        viewModel.setWritingTag(true)
+        assertEquals(true, viewModel.isWritingTag.value)
+
+        // Step 4: Complete write successfully
+        viewModel.onTagWriteResult(true)
+        assertEquals(false, viewModel.nfcWriteDialogShown.value)
+        assertEquals(true, viewModel.nfcWriteSuccess.value)
+
+        // Step 5: Dismiss success notification
+        viewModel.dismissNfcWriteSuccessAlert()
+        assertEquals(false, viewModel.nfcWriteSuccess.value)
+    }
+
+    @Test
+    fun `canceling write operation should reset related states`() {
+        // Arrange
+        viewModel.setWritingTag(true)
+        assertEquals(true, viewModel.isWritingTag.value)
+
+        // Act
+        viewModel.cancelWrite()
+
+        // Assert
+        assertEquals(false, viewModel.isWritingTag.value)
+    }
 }
