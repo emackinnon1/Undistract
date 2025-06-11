@@ -1,33 +1,11 @@
-// DONE
-//1.Accessibility Service Management
-//
-//Checking if the accessibility service is enabled
-//Prompting the user to enable the service if it's not enabled
-// DONE
-//2.NFC Handling
-//
-//Initializing NFC helper
-//Processing new intents (likely NFC-related)
-//Publishing intents to a StateFlow for consumption in the UI
-// IN_PROGRESS
-//3.UI Setup with Jetpack Compose
-//
-//Setting up the main UI with BlockerScreen
-//Providing dependencies to the Compose UI
-
 package com.undistract.ui.main
 
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.os.Bundle
 import android.view.accessibility.AccessibilityManager
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import com.undistract.nfc.NfcHelper
 import com.undistract.services.AppBlockerAccessibilityService
-import com.undistract.ui.blocking.BlockerScreen
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import org.junit.Before
@@ -37,13 +15,6 @@ import org.junit.Assert.*
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.Robolectric
-import androidx.compose.runtime.Composable
-import com.undistract.ui.blocking.BlockerScreen
-import kotlinx.coroutines.flow.MutableStateFlow
-import org.robolectric.android.controller.ActivityController
-import org.robolectric.Shadows
-import androidx.test.core.app.ApplicationProvider
-import kotlin.text.get
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
@@ -59,7 +30,7 @@ class MainActivityTest {
         MockKAnnotations.init(this)
         activity = spyk(MainActivity())
         // TODO: Use Robolectric to create the activity instance
-        // activity = Robolectric.buildActivity(MainActivity::class.java)
+        // activity = Robolectric.buildActivity(MainActivity::class.java).create().get()
 
         // Mock getSystemService to return our mock AccessibilityManager
         every { activity.getSystemService(Context.ACCESSIBILITY_SERVICE) } returns accessibilityManager
