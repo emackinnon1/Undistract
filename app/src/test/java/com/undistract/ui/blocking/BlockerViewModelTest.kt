@@ -1,24 +1,3 @@
-//Based on the `BlockerViewModel` code, here are the main functional areas to test:
-// DONE
-//1. **Tag Management**
-//   - Loading saved tags from SharedPreferences
-//   - Saving new NFC tags
-//   - Deleting tags
-//   - Scanning and validating tags
-// DONE
-//2. **App Blocking Control**
-//   - Toggling blocking state
-//   - Starting the BlockerService with appropriate app packages
-//   - Stopping the BlockerService
-// DONE
-//3. **Dialog State Management**
-//   - Managing various alert dialogs (scan tag, wrong tag, create tag)
-//   - NFC write process states (writing, success/failure)
-// IN PROGRESS
-//4. **Tag Generation**
-//   - Creating unique tag payloads with proper formatting
-
-
 package com.undistract.ui.blocking
 
 import android.content.Context

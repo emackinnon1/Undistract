@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
         private const val ACCESSIBILITY_SERVICE_ID = "com.undistract/.services.AppBlockerAccessibilityService"
     }
     
-    private lateinit var nfcHelper: NfcHelper
+    internal lateinit var nfcHelper: NfcHelper
     val newIntentFlow = MutableStateFlow<Intent?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
