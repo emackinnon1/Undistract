@@ -48,7 +48,7 @@ class AppBlockerAccessibilityService : AccessibilityService() {
         }
 
         // More reliable way to check if the service is enabled
-        private fun isAccessibilityServiceEnabled(context: Context): Boolean {
+        internal fun isAccessibilityServiceEnabled(context: Context): Boolean {
             val enabledServicesString = Settings.Secure.getString(
                 context.contentResolver,
                 Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
