@@ -1,0 +1,181 @@
+//DONE
+// 1. Profile list display
+//Displays all profiles from the profileManager.
+//DONE
+// 2. Profile selection
+//Selecting a profile updates the current profile in profileManager.
+//DONE
+// 3. Profile creation
+//Clicking "New..." opens the add profile dialog; saving adds a new profile to the list.
+//IN_PROGRESS
+// 4. Profile editing
+//Long-pressing a profile opens the edit dialog; saving updates the profile.
+//5. Profile deletion
+//In edit dialog, clicking delete removes the profile from the list.
+//6. Add profile dialog visibility
+//Clicking "New..." shows the add profile dialog; dismissing hides it.
+//7. Edit profile dialog visibility
+//Long-pressing a profile shows the edit dialog; dismissing hides it.
+//8. Instruction text
+//Displays instruction text about long-pressing to edit or delete.
+//9. Profile cell selection state
+//Selected profile visually indicates selection.
+
+
+
+
+package com.undistract.ui.profile
+
+import android.os.Build
+import com.undistract.data.models.Profile
+import com.undistract.managers.ProfileManager
+import io.mockk.verify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.slot
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import kotlin.intArrayOf
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performTextClearance
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+
+
+@ExperimentalCoroutinesApi
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+class ProfilesPickerTest {
+    @get:Rule
+    val composeTestRule = createComposeRule()
+
+    @Test
+    fun profileListDisplay_showsAllProfilesFromManager() {
+        val testProfiles = listOf(
+            Profile(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
+            Profile(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24"),
+            Profile(id = "3", name = "Focus", appPackageNames = listOf(), icon = "baseline_block_24")
+        )
+
+        // Create a mock ProfileManager instead of trying to extend it
+        val fakeManager = mockk<ProfileManager>(relaxed = true)
+
+        // Configure the mock to return our test data
+        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
+        every { fakeManager.currentProfileId } returns MutableStateFlow(testProfiles.first().id)
+
+        composeTestRule.setContent {
+            ProfilesPicker(profileManager = fakeManager)
+        }
+
+        // Verify each profile name appears exactly once
+        testProfiles.forEach { profile ->
+            composeTestRule.onAllNodesWithText(profile.name).assertCountEquals(1)
+        }
+    }
+
+    @Test
+    fun profileSelection_updatesCurrentProfileInManager() {
+        val testProfiles = listOf(
+            Profile(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
+            Profile(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24"),
+            Profile(id = "3", name = "Focus", appPackageNames = listOf(), icon = "baseline_block_24")
+        )
+
+        // Create a mock ProfileManager
+        val fakeManager = mockk<ProfileManager>(relaxed = true)
+
+        // Configure the mock to return our test data
+        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
+        every { fakeManager.currentProfileId } returns MutableStateFlow(testProfiles.first().id)
+
+        composeTestRule.setContent {
+            ProfilesPicker(profileManager = fakeManager)
+        }
+
+        // Get the second profile to select
+        val profileToSelect = testProfiles[1]
+
+        // Find and click the profile by its name
+        composeTestRule.onNodeWithText(profileToSelect.name).performClick()
+        composeTestRule.waitForIdle()
+
+        // Verify that setCurrentProfile was called with the correct profile ID
+        verify { fakeManager.setCurrentProfile(profileToSelect.id) }
+    }
+
+    @Test
+    fun profileCreation_clickingNewOpensDialogAndSavingAddsProfile() {
+        val testProfiles = listOf(
+            Profile(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
+            Profile(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24")
+        )
+
+        val fakeManager = mockk<ProfileManager>(relaxed = true)
+        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
+        every { fakeManager.currentProfileId } returns MutableStateFlow(testProfiles.first().id)
+
+        // Capture any profile being added to verify its properties later
+        val profileSlot = slot<Profile>()
+        every { fakeManager.addProfile(capture(profileSlot)) } returns Unit
+
+        composeTestRule.setContent {
+            ProfilesPicker(profileManager = fakeManager)
+        }
+
+        // Part 1: Verify dialog appears when "New..." is clicked
+        // Verify dialog isn't visible initially
+        composeTestRule.onNodeWithText("Save").assertDoesNotExist()
+
+        // Click the "New..." cell
+        composeTestRule.onNodeWithText("New...").performClick()
+        composeTestRule.waitForIdle()
+
+
+
+        // Verify dialog appears by checking for dialog elements
+        composeTestRule.onNodeWithText("Create Profile").assertExists()
+        composeTestRule.onNodeWithText("Save").assertExists()
+        composeTestRule.onNodeWithText("Cancel").assertExists()
+
+        // Part 2: Simulate filling the form and saving
+        // Enter a profile name (assuming TextField with label "Profile name")
+        composeTestRule.onNodeWithText("Profile Name").performTextInput("Study")
+        composeTestRule.waitForIdle()
+
+        // Click save button
+        composeTestRule.onNodeWithText("Save").performClick()
+        composeTestRule.waitForIdle()
+
+        // After clicking Save, verify dialog disappears
+        composeTestRule.onNodeWithText("Save").assertDoesNotExist()
+
+        // Verify profileManager.addProfile was called with a profile
+        verify { fakeManager.addProfile(any()) }
+
+        // Verify the captured profile has the right name
+        assert(profileSlot.captured.name == "Study")
+        // Verify icon and apps in captured profile
+        assert(profileSlot.captured.icon == "baseline_block_24") // Default icon
+        assert(profileSlot.captured.appPackageNames.isEmpty())
+    }
+}
