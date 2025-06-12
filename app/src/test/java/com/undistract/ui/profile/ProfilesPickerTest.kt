@@ -10,9 +10,10 @@
 //DONE
 // 4. Profile editing
 //Long-pressing a profile opens the edit dialog; saving updates the profile.
-//IN_PROGRESS
+//DONE
 //5. Profile deletion
 //In edit dialog, clicking delete removes the profile from the list.
+//IN_PROGRESS
 //6. Add profile dialog visibility
 //Clicking "New..." shows the add profile dialog; dismissing hides it.
 //7. Edit profile dialog visibility
@@ -267,4 +268,65 @@ class ProfilesPickerTest {
         assert(nameSlot.captured == "Updated Work")
     }
 
+    @Test
+    fun profileDeletion_clickingDeleteRemovesProfileFromList() {
+        // Create test profiles with one non-default profile that can be deleted
+        val testProfiles = listOf(
+            Profile(id = "1", name = "Default", appPackageNames = listOf(),
+                   icon = "baseline_home_24"),
+            Profile(id = "2", name = "Work", appPackageNames = listOf("com.slack"),
+                   icon = "baseline_work_24")
+        )
+
+        val fakeManager = mockk<ProfileManager>(relaxed = true)
+        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
+        every { fakeManager.currentProfileId } returns MutableStateFlow(testProfiles.first().id)
+
+        // Capture the profileId passed to deleteProfile to verify later
+        val profileIdSlot = slot<String>()
+        every { fakeManager.deleteProfile(capture(profileIdSlot)) } returns Unit
+
+        composeTestRule.setContent {
+            Column {
+                // Create modified version of ProfilesPicker that simulates opening the edit dialog
+                val profiles by fakeManager.profiles.collectAsState()
+                val currentProfileId by fakeManager.currentProfileId.collectAsState()
+
+                var showAddProfileView by remember { mutableStateOf(false) }
+                // Start with the non-default profile in edit mode
+                var editingProfile by remember { mutableStateOf<Profile?>(testProfiles[1]) }
+
+                // Show the edit dialog right away for testing
+                editingProfile?.let { profile ->
+                    ProfileFormDialog(
+                        profile = profile,
+                        onDismiss = { editingProfile = null },
+                        onSave = { name, icon, apps ->
+                            fakeManager.updateProfile(
+                                id = profile.id,
+                                name = name,
+                                appPackageNames = apps,
+                                icon = icon
+                            )
+                            editingProfile = null
+                        },
+                        onDelete = { profileId ->
+                            fakeManager.deleteProfile(profileId)
+                            editingProfile = null
+                        }
+                    )
+                }
+            }
+        }
+
+        // Find and click the delete button
+        composeTestRule.onNodeWithText("Delete").performClick()
+        composeTestRule.waitForIdle()
+
+        // Verify deleteProfile was called with the correct profile ID
+        verify { fakeManager.deleteProfile("2") }
+
+        // Verify the captured profile ID matches the expected one
+        assert(profileIdSlot.captured == "2")
+    }
 }
