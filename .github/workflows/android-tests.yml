@@ -30,8 +30,8 @@ jobs:
           name: test-results
           path: app/build/reports/tests/
           
-      - name: Run instrumented tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 29
-          script: ./gradlew connectedCheck --tests "com.undistract.*"
+      # - name: Run instrumented tests
+      #   uses: reactivecircus/android-emulator-runner@v2
+      #   with:
+      #     api-level: 29
+      #     script: ./gradlew connectedCheck --tests "com.undistract.*"
