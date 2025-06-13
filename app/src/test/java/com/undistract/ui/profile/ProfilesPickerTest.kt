@@ -132,7 +132,7 @@ class ProfilesPickerTest {
 
 
         // Verify dialog appears by checking for dialog elements
-        composeTestRule.onNodeWithText("Create Profile").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Create Profile").assertExists()
         composeTestRule.onNodeWithText("Save").assertExists()
         composeTestRule.onNodeWithText("Cancel").assertExists()
 
