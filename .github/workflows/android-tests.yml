@@ -17,11 +17,17 @@ jobs:
           java-version: '17'
           cache: gradle
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Grant execute permissions for gradlew
         run: chmod +x ./gradlew
 
-      - name: Run Tests with Gradle
-        run: ./gradlew --scan test 
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
+
+      # - name: Run Tests with Gradle
+      #   run: ./gradlew --scan test 
       # - uses: actions/checkout@v3
       
       # - name: Set up JDK
