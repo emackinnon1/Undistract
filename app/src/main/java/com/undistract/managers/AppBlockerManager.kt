@@ -7,12 +7,12 @@ import android.net.Uri
 import android.os.Build
 import android.os.Process
 import android.provider.Settings
+import androidx.core.content.edit
 import com.undistract.data.models.Profile
 import com.undistract.services.AppBlockingService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import androidx.core.content.edit
 
 /**
  * Manager class responsible for controlling application blocking functionality.
