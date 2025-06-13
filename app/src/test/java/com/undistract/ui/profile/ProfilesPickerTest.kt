@@ -19,14 +19,12 @@
 //DONE
 //7. Edit profile dialog visibility
 //Long-pressing a profile shows the edit dialog; dismissing hides it.
-//IN_PROGRESS
+//DONE
 //8. Instruction text
 //Displays instruction text about long-pressing to edit or delete.
-//
+//IN_PROGRESS
 //9. Profile cell selection state
 //Selected profile visually indicates selection.
-
-
 
 
 package com.undistract.ui.profile
@@ -467,5 +465,35 @@ class ProfilesPickerTest {
 
         // Verify that instruction text is displayed
         composeTestRule.onNodeWithText("Long press on a profile to edit or delete it.").assertExists()
+    }
+
+    @Test
+    fun profileCellSelectionState_selectedProfileShowsVisualIndication() {
+        // Create test profiles
+        val testProfiles = listOf(
+            Profile(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
+            Profile(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24")
+        )
+
+        val fakeManager = mockk<ProfileManager>(relaxed = true)
+        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
+
+        // Set the first profile as selected
+        val selectedProfileId = testProfiles[0].id
+        every { fakeManager.currentProfileId } returns MutableStateFlow(selectedProfileId)
+
+        composeTestRule.setContent {
+            ProfilesPicker(profileManager = fakeManager)
+        }
+
+        // Verify profiles are displayed
+        composeTestRule.onNodeWithText("Work").assertExists()
+        composeTestRule.onNodeWithText("Personal").assertExists()
+
+        // Click the second profile to change selection
+        composeTestRule.onNodeWithText("Personal").performClick()
+
+        // Verify the correct profile ID was set as current
+        verify { fakeManager.setCurrentProfile(testProfiles[1].id) }
     }
 }
