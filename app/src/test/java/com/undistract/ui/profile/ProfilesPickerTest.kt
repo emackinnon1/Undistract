@@ -16,13 +16,13 @@
 //DONE
 //6. Add profile dialog visibility
 //Clicking "New..." shows the add profile dialog; dismissing hides it.
-//IN_PROGRESS
+//DONE
 //7. Edit profile dialog visibility
 //Long-pressing a profile shows the edit dialog; dismissing hides it.
-//
+//IN_PROGRESS
 //8. Instruction text
 //Displays instruction text about long-pressing to edit or delete.
-//DONE
+//
 //9. Profile cell selection state
 //Selected profile visually indicates selection.
 
@@ -449,5 +449,23 @@ class ProfilesPickerTest {
         composeTestRule.onNodeWithText("Edit Profile").assertDoesNotExist()
     }
 
+    @Test
+    fun instructionText_displaysLongPressInstructions() {
+        // Create test profiles
+        val testProfiles = listOf(
+            Profile(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
+            Profile(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24")
+        )
 
+        val fakeManager = mockk<ProfileManager>(relaxed = true)
+        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
+        every { fakeManager.currentProfileId } returns MutableStateFlow(testProfiles.first().id)
+
+        composeTestRule.setContent {
+            ProfilesPicker(profileManager = fakeManager)
+        }
+
+        // Verify that instruction text is displayed
+        composeTestRule.onNodeWithText("Long press on a profile to edit or delete it.").assertExists()
+    }
 }
