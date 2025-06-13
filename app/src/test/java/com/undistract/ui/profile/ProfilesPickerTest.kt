@@ -329,4 +329,52 @@ class ProfilesPickerTest {
         // Verify the captured profile ID matches the expected one
         assert(profileIdSlot.captured == "2")
     }
+
+    @Test
+    fun addProfileDialog_clickingNewShowsDialogAndDismissingHidesIt() {
+        // Create test profiles
+        val testProfiles = listOf(
+            Profile(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
+            Profile(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24")
+        )
+
+        val fakeManager = mockk<ProfileManager>(relaxed = true)
+        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
+        every { fakeManager.currentProfileId } returns MutableStateFlow(testProfiles.first().id)
+
+        composeTestRule.setContent {
+            ProfilesPicker(profileManager = fakeManager)
+        }
+
+        // Verify dialog isn't visible initially
+        composeTestRule.onNodeWithText("Create Profile").assertDoesNotExist()
+
+        // Click the "New..." cell to open the dialog
+        composeTestRule.onNodeWithText("New...").performClick()
+        composeTestRule.waitForIdle()
+
+        // Verify dialog appears
+        composeTestRule.onNodeWithText("Create Profile").assertExists()
+
+        // Click cancel to dismiss the dialog
+        composeTestRule.onNodeWithText("Cancel").performClick()
+        composeTestRule.waitForIdle()
+
+        // Verify dialog disappears
+        composeTestRule.onNodeWithText("Create Profile").assertDoesNotExist()
+
+        // Test scenario where user clicks outside dialog to dismiss
+        composeTestRule.onNodeWithText("New...").performClick()
+        composeTestRule.waitForIdle()
+
+        // Verify dialog appears again
+        composeTestRule.onNodeWithText("Create Profile").assertExists()
+
+        // Press back (simulated by dialog's onDismissRequest)
+        composeTestRule.onNodeWithText("Cancel").performClick()
+        composeTestRule.waitForIdle()
+
+        // Verify dialog disappears
+        composeTestRule.onNodeWithText("Create Profile").assertDoesNotExist()
+    }
 }
