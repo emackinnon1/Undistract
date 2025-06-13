@@ -476,24 +476,32 @@ class ProfilesPickerTest {
         )
 
         val fakeManager = mockk<ProfileManager>(relaxed = true)
-        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
+        val currentProfileIdFlow = MutableStateFlow(testProfiles[0].id)
 
-        // Set the first profile as selected
-        val selectedProfileId = testProfiles[0].id
-        every { fakeManager.currentProfileId } returns MutableStateFlow(selectedProfileId)
+        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
+        every { fakeManager.currentProfileId } returns currentProfileIdFlow
+        every { fakeManager.setCurrentProfile(any()) } answers {
+            currentProfileIdFlow.value = firstArg()
+        }
 
         composeTestRule.setContent {
             ProfilesPicker(profileManager = fakeManager)
         }
 
-        // Verify profiles are displayed
+        // Verify both profiles exist
         composeTestRule.onNodeWithText("Work").assertExists()
         composeTestRule.onNodeWithText("Personal").assertExists()
 
-        // Click the second profile to change selection
+        // Verify that clicking on the second profile calls setCurrentProfile
         composeTestRule.onNodeWithText("Personal").performClick()
-
-        // Verify the correct profile ID was set as current
         verify { fakeManager.setCurrentProfile(testProfiles[1].id) }
+
+        // Verify the mutable flow was updated with the second profile's ID
+        assert(currentProfileIdFlow.value == testProfiles[1].id)
+
+        // Click back to first profile and verify it's updated
+        composeTestRule.onNodeWithText("Work").performClick()
+        verify(exactly = 1) { fakeManager.setCurrentProfile(testProfiles[0].id) }
+        assert(currentProfileIdFlow.value == testProfiles[0].id)
     }
 }
