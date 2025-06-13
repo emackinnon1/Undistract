@@ -55,6 +55,7 @@ fun ProfilesPicker(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .fillMaxHeight()
             .background(MaterialTheme.colorScheme.background) // ProfileSectionBackground color
     ) {
         Text(
@@ -70,7 +71,7 @@ fun ProfilesPicker(
             contentPadding = PaddingValues(10.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(3f).fillMaxHeight()
         ) {
             items(profiles) { profile ->
                 ProfileCell(
@@ -81,20 +82,48 @@ fun ProfilesPicker(
                 )
             }
 
-            item {
-                ProfileCellBase(
-                    name = "New...",
-                    iconResId = R.drawable.baseline_add_24,
-                    appsBlocked = null,
-                    isSelected = false,
-                    isDashed = true,
-                    hasDivider = false,
-                    onClick = { showAddProfileView = true }
+//            item {
+//                ProfileCellBase(
+//                    name = "Add New Profile",
+//                    iconResId = R.drawable.baseline_add_24,
+//                    appsBlocked = null,
+//                    isSelected = false,
+//                    isDashed = true,
+//                    hasDivider = false,
+//                    onClick = { showAddProfileView = true }
+//                )
+//            }
+        }
+
+        OutlinedButton(
+            onClick = { showAddProfileView = true },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            border = BorderStroke(
+                width = 2.dp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            ),
+            shape = RoundedCornerShape(8.dp),
+            contentPadding = PaddingValues(vertical = 12.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_add_24),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Add New Profile",
+                    style = MaterialTheme.typography.bodyLarge
                 )
             }
         }
-
-        Spacer(modifier = Modifier.weight(1f))
 
         Text(
             text = "Long press on a profile to edit or delete it.",

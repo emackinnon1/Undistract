@@ -1,32 +1,3 @@
-//DONE
-// 1. Profile list display
-//Displays all profiles from the profileManager.
-//DONE
-// 2. Profile selection
-//Selecting a profile updates the current profile in profileManager.
-//DONE
-// 3. Profile creation
-//Clicking "New..." opens the add profile dialog; saving adds a new profile to the list.
-//DONE
-// 4. Profile editing
-//Long-pressing a profile opens the edit dialog; saving updates the profile.
-//DONE
-//5. Profile deletion
-//In edit dialog, clicking delete removes the profile from the list.
-//DONE
-//6. Add profile dialog visibility
-//Clicking "New..." shows the add profile dialog; dismissing hides it.
-//DONE
-//7. Edit profile dialog visibility
-//Long-pressing a profile shows the edit dialog; dismissing hides it.
-//DONE
-//8. Instruction text
-//Displays instruction text about long-pressing to edit or delete.
-//IN_PROGRESS
-//9. Profile cell selection state
-//Selected profile visually indicates selection.
-
-
 package com.undistract.ui.profile
 
 import android.os.Build
@@ -150,12 +121,12 @@ class ProfilesPickerTest {
             ProfilesPicker(profileManager = fakeManager)
         }
 
-        // Part 1: Verify dialog appears when "New..." is clicked
+        // Part 1: Verify dialog appears when "Add New Profile" is clicked
         // Verify dialog isn't visible initially
         composeTestRule.onNodeWithText("Save").assertDoesNotExist()
 
-        // Click the "New..." cell
-        composeTestRule.onNodeWithText("New...").performClick()
+        // Click the "Add New Profile" cell
+        composeTestRule.onNodeWithText("Add New Profile").performClick()
         composeTestRule.waitForIdle()
 
 
@@ -352,8 +323,8 @@ class ProfilesPickerTest {
         // Verify dialog isn't visible initially
         composeTestRule.onNodeWithText("Create Profile").assertDoesNotExist()
 
-        // Click the "New..." cell to open the dialog
-        composeTestRule.onNodeWithText("New...").performClick()
+        // Click the "Add New Profile" cell to open the dialog
+        composeTestRule.onNodeWithText("Add New Profile").performClick()
         composeTestRule.waitForIdle()
 
         // Verify dialog appears
@@ -367,7 +338,7 @@ class ProfilesPickerTest {
         composeTestRule.onNodeWithText("Create Profile").assertDoesNotExist()
 
         // Test scenario where user clicks outside dialog to dismiss
-        composeTestRule.onNodeWithText("New...").performClick()
+        composeTestRule.onNodeWithText("Add New Profile").performClick()
         composeTestRule.waitForIdle()
 
         // Verify dialog appears again
