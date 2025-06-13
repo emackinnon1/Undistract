@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.undistract.R
-import com.undistract.UndistractApp
 import com.undistract.data.models.Profile
 import com.undistract.data.models.AppInfo
 import com.undistract.managers.ProfileManager
@@ -342,10 +341,10 @@ fun ProfileFormDialog(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (isEditMode && profile?.isDefault == false) {
+                    if (isEditMode && profile.isDefault == false) {
                         TextButton(
                             onClick = {
-                                profile?.let {
+                                profile.let {
                                     onDelete?.invoke(it.id)  // Call onDelete with profile ID
                                 }
                                 onDismiss()
@@ -485,7 +484,6 @@ fun AppSelectionDialog(
 ) {
     val context = LocalContext.current
     val packageManager = context.packageManager
-    val profileManager = UndistractApp.profileManager
 
     val selectedAppsMutable = remember {
         mutableStateListOf<String>().apply { addAll(selectedApps) }
