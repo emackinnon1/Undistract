@@ -80,7 +80,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.mockk.android)
     testImplementation(libs.robolectric)
-    testImplementation(libs.ui.test.junit4)
+    testImplementation(libs.androidx.ui.test.junit4)
 
     // Android test implementation dependencies
     androidTestImplementation(libs.androidx.espresso.core)
