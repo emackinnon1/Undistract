@@ -40,7 +40,19 @@ import com.undistract.data.models.Profile
 import com.undistract.data.models.AppInfo
 import com.undistract.managers.ProfileManager
 
-
+/**
+ * A Composable that displays and manages user profiles for app blocking.
+ *
+ * This component shows a grid of profiles that the user can select, create, edit, or delete.
+ * It displays the currently selected profile and provides functionality to:
+ * - Select a profile to be used for app blocking
+ * - Create new profiles
+ * - Edit existing profiles
+ * - Delete profiles
+ *
+ * @param profileManager The manager that handles profile data and operations
+ * @param modifier Optional modifier for customizing the component's layout and appearance
+ */
 @Composable
 fun ProfilesPicker(
     profileManager: ProfileManager,
@@ -82,17 +94,6 @@ fun ProfilesPicker(
                 )
             }
 
-//            item {
-//                ProfileCellBase(
-//                    name = "Add New Profile",
-//                    iconResId = R.drawable.baseline_add_24,
-//                    appsBlocked = null,
-//                    isSelected = false,
-//                    isDashed = true,
-//                    hasDivider = false,
-//                    onClick = { showAddProfileView = true }
-//                )
-//            }
         }
 
         OutlinedButton(
@@ -132,7 +133,7 @@ fun ProfilesPicker(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 8.dp)
+                .padding(bottom = 8.dp) // Adds bottom spacing between the helper text and the container's edge to improve visual separation and readability
         )
     }
 
@@ -173,6 +174,17 @@ fun ProfilesPicker(
     }
 }
 
+/**
+ * A Composable that displays a single profile as a selectable cell.
+ *
+ * This component renders a profile with its name, icon, and the number of apps blocked.
+ * It supports both tap (for selection) and long press (for editing) interactions.
+ *
+ * @param profile The profile data to display
+ * @param isSelected Whether this profile is currently selected
+ * @param onClick Callback invoked when the profile is tapped
+ * @param onLongClick Callback invoked when the profile is long pressed
+ */
 @Composable
 fun ProfileCell(
     profile: Profile,
@@ -197,6 +209,22 @@ fun ProfileCell(
     )
 }
 
+/**
+ * Base Composable for profile cells with customizable appearance and behavior.
+ *
+ * This component provides the visual structure for profile cells with options to customize
+ * its appearance and behavior. It's used by ProfileCell and can be used directly for
+ * special cases like the "Add New Profile" button.
+ *
+ * @param name The name to display in the cell
+ * @param iconResId Resource ID for the icon to display
+ * @param appsBlocked Optional number of apps blocked by this profile (null if not applicable)
+ * @param isSelected Whether this cell is currently selected
+ * @param isDashed Whether to use a dashed border style
+ * @param hasDivider Whether to show a divider between the icon and text
+ * @param onClick Callback invoked when the cell is tapped
+ * @param onLongClick Callback invoked when the cell is long pressed
+ */
 @Composable
 fun ProfileCellBase(
     name: String,
@@ -277,6 +305,20 @@ fun ProfileCellBase(
     }
 }
 
+/**
+ * A dialog for creating or editing a profile.
+ *
+ * This Composable displays a form dialog that allows users to:
+ * - Enter a profile name
+ * - Select an icon
+ * - Choose apps to block
+ * - Delete the profile (if in edit mode)
+ *
+ * @param profile Optional existing profile for editing (null for create mode)
+ * @param onDismiss Callback invoked when the dialog is dismissed
+ * @param onSave Callback invoked when the profile is saved with the name, icon, and app list
+ * @param onDelete Optional callback for deleting a profile, only used in edit mode
+ */
 @Composable
 fun ProfileFormDialog(
     profile: Profile? = null,
@@ -432,6 +474,16 @@ fun ProfileFormDialog(
     }
 }
 
+/**
+ * A dialog for selecting an icon for a profile.
+ *
+ * This Composable displays a grid of available icons that the user can select from.
+ * The currently selected icon is highlighted.
+ *
+ * @param currentIcon The currently selected icon identifier
+ * @param onIconSelected Callback invoked when an icon is selected
+ * @param onDismiss Callback invoked when the dialog is dismissed
+ */
 @Composable
 fun IconPickerDialog(
     currentIcon: String,
@@ -505,6 +557,16 @@ fun IconPickerDialog(
     )
 }
 
+/**
+ * A dialog for selecting apps to be blocked by a profile.
+ *
+ * This Composable displays a list of installed apps that the user can select for blocking.
+ * It also provides a "Select All" option for convenience.
+ *
+ * @param selectedApps List of currently selected app package names
+ * @param onAppsSelected Callback invoked when app selection is confirmed
+ * @param onDismiss Callback invoked when the dialog is dismissed
+ */
 @Composable
 fun AppSelectionDialog(
     selectedApps: List<String>,
@@ -650,6 +712,15 @@ fun AppSelectionDialog(
     )
 }
 
+/**
+ * Extension function to convert a Drawable to a Bitmap.
+ *
+ * This utility function handles conversion of any Drawable type to a Bitmap format,
+ * which is needed for displaying app icons in the Image composable.
+ * It properly handles BitmapDrawables and creates appropriate sized bitmaps for other Drawable types.
+ *
+ * @return A Bitmap representation of the Drawable
+ */
 fun Drawable.toBitmap(): Bitmap {
     if (this is BitmapDrawable) return this.bitmap
 
