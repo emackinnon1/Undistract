@@ -5,7 +5,9 @@ import android.nfc.NfcAdapter
 import android.provider.Settings
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -35,16 +38,19 @@ import kotlinx.coroutines.flow.StateFlow
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.ui.platform.testTag
 
-/** * Composable function for the Blocker screen, which allows users to block or unblock apps using NFC tags.
+/**
+ * Composable function for the Blocker screen, which allows users to block or unblock apps using NFC tags.
  * It provides a UI for scanning NFC tags, creating new tags, and managing existing tags.
  *
- * @param nfcHelper The NfcHelper instance to manage NFC operations.
- * @param newIntentFlow Flow of new intents received by the NFC helper.
- * @param viewModel The BlockerViewModel instance to manage state and business logic.
+ * The screen displays different states based on whether blocking is active, and provides
+ * appropriate UI elements for tag interaction including scanning dialogs, creation flows,
+ * and error handling. When not in blocking mode, it also shows a profile picker.
+ *
+ * @param nfcHelper The NfcHelper instance to manage NFC operations such as reading and writing tags.
+ * @param newIntentFlow StateFlow of new intents received by the NFC helper, used to handle NFC tag discoveries.
+ * @param viewModel The BlockerViewModel instance to manage state and business logic for the blocker functionality.
+ *                  Uses default viewModel() provider if not explicitly provided.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -402,10 +408,21 @@ fun PulsingGlowEffect(content: @Composable () -> Unit) {
     }
 }
 
-/** Composable function to draw a glowing border around content.
- * It uses the drawBehind modifier to create a custom border with multiple layers of color and alpha.
+/**
+ * Composable function that creates a decorative glowing border around content.
+ *
+ * This composable uses the drawBehind modifier to render multiple concentric borders
+ * with decreasing opacity to create a glowing effect. The glow consists of three layers:
+ * - Primary layer: 70% opacity, 2dp stroke width
+ * - Secondary layer: 40% opacity, 4dp stroke width
+ * - Outer layer: 20% opacity, 6dp stroke width
+ *
+ * All layers use the same purple border color (0xFFA346FF) and rounded corners.
+ * This effect is particularly useful for highlighting important UI elements or
+ * creating a distinct visual boundary around dialog content.
  *
  * @param content The composable content to display inside the glowing border.
+ *                This will be centered within the border effect.
  */
 @Composable
 fun GlowingBorder(content: @Composable () -> Unit) {
