@@ -7,7 +7,7 @@ import com.undistract.data.entities.ProfileEntity
 interface ProfileRepository {
     fun getAllProfiles(): Flow<List<ProfileEntity>>
     suspend fun saveProfile(profile: ProfileEntity)
-    // Other methods
+    suspend fun deleteProfile(profile: ProfileEntity)
 }
 
 class ProfileRepositoryImpl(
@@ -18,5 +18,9 @@ class ProfileRepositoryImpl(
 
     override suspend fun saveProfile(profile: ProfileEntity) {
         profileDao.upsertProfile(profile)
+    }
+
+    override suspend fun deleteProfile(profile: ProfileEntity) {
+        profileDao.deleteProfile(profile)
     }
 }
