@@ -3,7 +3,7 @@ package com.undistract.data.local
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.undistract.data.daos.ProfileDao
-import com.undistract.data.room.ProfileEntity
+import com.undistract.data.entities.ProfileEntity
 
 @Database(
     entities = [

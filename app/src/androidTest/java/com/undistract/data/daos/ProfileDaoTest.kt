@@ -4,9 +4,8 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.undistract.data.daos.ProfileDao
 import com.undistract.data.local.UndistractDatabase
-import com.undistract.data.room.ProfileEntity
+import com.undistract.data.entities.ProfileEntity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.*
@@ -36,16 +35,57 @@ class ProfileDaoTest {
     }
 
     @Test
-    fun insertProfile_savesToDb() = runBlocking {
+    fun upsertProfile_savesToDb() = runBlocking {
         val profile = ProfileEntity(
             id = "test-id",
             name = "Test Profile",
             appPackageNames = listOf("com.example.app"),
             icon = "test_icon"
         )
-        dao.insertProfile(profile)
+        val anotherProfile = ProfileEntity(
+            id = "another-id",
+            name = "Another Profile",
+            appPackageNames = listOf("com.another.app"),
+            icon = "another_icon"
+        )
+        dao.upsertProfile(profile)
 
-        val savedProfile = dao.getAllProfiles().first()
-        Assert.assertTrue(savedProfile.any { it.id == "test-id" && it.name == "Test Profile" })
+        var allProfiles = dao.getAllProfiles().first()
+        Assert.assertTrue(allProfiles.any { it.id == "test-id" && it.name == "Test Profile" })
+        Assert.assertEquals(1, allProfiles.size)
+
+        dao.upsertProfile(anotherProfile)
+
+        allProfiles = dao.getAllProfiles().first()
+        Assert.assertEquals(2, allProfiles.size)
+    }
+
+    @Test
+    fun updateProfile_appPackageNames_persistsUpdate() = runBlocking {
+        // Create and insert a profile
+        val profile = ProfileEntity(
+            id = "test-id",
+            name = "Test Profile",
+            appPackageNames = listOf("com.example.app"),
+            icon = "test_icon"
+        )
+        dao.upsertProfile(profile)
+
+        // Find the previously-created profile
+        val original = dao.getAllProfiles().first().find { it.id == "test-id" }
+        Assert.assertNotNull(original)
+
+        // Update the appPackageNames
+        val updatedProfile = original!!.copy(appPackageNames = listOf("com.example.app", "com.another.app"))
+
+        // Save the profile
+        dao.upsertProfile(updatedProfile)
+
+        // Get the profile from the database and verify the update
+        val saved = dao.getAllProfiles().first().find { it.id == "test-id" }
+        val allProfiles = dao.getAllProfiles().first()
+        Assert.assertNotNull(saved)
+        Assert.assertEquals(listOf("com.example.app", "com.another.app"), saved?.appPackageNames)
+        Assert.assertEquals(1, allProfiles.size)
     }
 }

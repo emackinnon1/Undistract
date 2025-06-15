@@ -1,4 +1,4 @@
-package com.undistract.data.room.helpers
+package com.undistract.data.helpers
 
 import androidx.room.TypeConverter
 
