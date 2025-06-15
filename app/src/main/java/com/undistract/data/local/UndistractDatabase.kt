@@ -9,7 +9,6 @@ import com.undistract.data.entities.ProfileEntity
     entities = [
         ProfileEntity::class,
 //        NfcTagEntity::class,
-//        AppInfoEntity::class,
 //        UndistractedStatsEntity::class,
 //        EmergencyUsageEntity::class
     ],
@@ -18,7 +17,6 @@ import com.undistract.data.entities.ProfileEntity
 abstract class UndistractDatabase : RoomDatabase() {
     abstract fun profileDao(): ProfileDao
 //    abstract fun nfcTagDao(): NfcTagDao
-//    abstract fun appInfoDao(): AppInfoDao
 //    abstract fun statsDao(): UndistractedStatsDao
 //    abstract fun emergencyUsageDao(): EmergencyUsageDao
 }
