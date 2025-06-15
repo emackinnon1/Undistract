@@ -88,4 +88,27 @@ class ProfileDaoTest {
         Assert.assertEquals(listOf("com.example.app", "com.another.app"), saved?.appPackageNames)
         Assert.assertEquals(1, allProfiles.size)
     }
+
+    @Test
+    fun deleteProfile_removesFromDb() = runBlocking {
+        val profile = ProfileEntity(
+            id = "delete-id",
+            name = "Delete Profile",
+            appPackageNames = listOf("com.example.delete"),
+            icon = "delete_icon"
+        )
+        dao.upsertProfile(profile)
+
+        // Ensure the profile is inserted
+        var allProfiles = dao.getAllProfiles().first()
+        Assert.assertTrue(allProfiles.any { it.id == "delete-id" })
+
+        // Delete the profile
+        dao.deleteProfile(profile)
+
+        // Ensure the profile is removed
+        allProfiles = dao.getAllProfiles().first()
+        Assert.assertFalse(allProfiles.any { it.id == "delete-id" })
+        Assert.assertEquals(0, allProfiles.size)
+    }
 }
