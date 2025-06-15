@@ -1,6 +1,7 @@
 [versions]
 activityCompose = "1.10.1"
 agp = "8.10.1"
+androidxJunit = "1.2.1"
 annotation = "1.9.1"
 appcompat = "1.7.1"
 cardview = "1.0.0"
@@ -10,12 +11,14 @@ constraintlayout = "2.2.1"
 core = "1.6.1"
 coreKtx = "1.16.0"
 coreTesting = "2.2.0"
+coreVersion = "1.6.1"
 espressoCore = "3.6.1"
 gson = "2.11.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
-kotlin = "2.0.21"
+kotlin = "2.1.20"
 kotlinx-coroutines = "1.8.1"
+ksp = "2.1.20-2.0.0"
 lifecycleRuntimeKtx = "2.9.1"
 localbroadcastmanager = "1.1.0"
 mockitoCore = "5.8.0"
@@ -23,7 +26,9 @@ mockitoKotlin = "5.2.1"
 mockkAndroid = "1.13.9"
 mockk = "1.13.9"
 robolectric = "4.13"
+roomTesting = "2.7.1"
 runtime = "1.0.0-alpha04"
+room = "2.7.1"
 uiTestJunit4Android = "1.8.2"
 
 [libraries]
@@ -43,6 +48,10 @@ androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-localbroadcastmanager = { module = "androidx.localbroadcastmanager:localbroadcastmanager", version.ref = "localbroadcastmanager" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
 androidx-runtime = { group = "androidx.xr.runtime", name = "runtime", version.ref = "runtime" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
@@ -67,3 +76,4 @@ robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectr
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
