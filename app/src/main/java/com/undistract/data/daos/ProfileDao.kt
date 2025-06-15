@@ -1,6 +1,7 @@
 package com.undistract.data.daos
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Upsert
 import androidx.room.Query
 import com.undistract.data.entities.ProfileEntity
@@ -14,5 +15,6 @@ interface ProfileDao {
     @Upsert
     suspend fun upsertProfile(profile: ProfileEntity)
 
-    // Additional CRUD operations
+    @Delete
+    suspend fun deleteProfile(profile: ProfileEntity)
 }
