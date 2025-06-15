@@ -24,9 +24,6 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="ProfileRepositoryImplTest">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
       <SelectionState runConfigName="ProfileRepositoryImplTest (1)">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
