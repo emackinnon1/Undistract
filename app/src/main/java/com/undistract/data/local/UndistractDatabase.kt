@@ -14,7 +14,8 @@ import com.undistract.data.entities.ProfileEntity
 //        UndistractedStatsEntity::class, // TODO: Placeholder for future implementation of undistracted stats tracking.
 //        EmergencyUsageEntity::class // TODO: Placeholder for future implementation of emergency usage tracking.
     ],
-    version = 1
+    version = 1,
+    exportSchema = false
 )
 abstract class UndistractDatabase : RoomDatabase() {
     abstract fun profileDao(): ProfileDao
