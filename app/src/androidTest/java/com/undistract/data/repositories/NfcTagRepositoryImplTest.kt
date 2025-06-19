@@ -42,12 +42,19 @@ class NfcTagRepositoryImplTest {
         val tag = NfcTagEntity(
             id = "tag-id",
             payload = "payload1",
-            createdAt = 123L
+        )
+        val nextTag = NfcTagEntity(
+            id = "update-id",
+            payload = "initial",
         )
         repository.saveTag(tag)
         val allTags = repository.getAllTags().first()
         Assert.assertTrue(allTags.any { it.id == "tag-id" && it.payload == "payload1" })
         Assert.assertEquals(1, allTags.size)
+
+        repository.saveTag(nextTag)
+        val updatedTags = repository.getAllTags().first()
+        Assert.assertEquals(2, updatedTags.size)
     }
 
     @Test
@@ -55,7 +62,6 @@ class NfcTagRepositoryImplTest {
         val initialTag = NfcTagEntity(
             id = "update-id",
             payload = "initial",
-            createdAt = 123L
         )
         repository.saveTag(initialTag)
 
@@ -70,7 +76,6 @@ class NfcTagRepositoryImplTest {
         val tag = NfcTagEntity(
             id = "delete-id",
             payload = "to_delete",
-            createdAt = 123L
         )
         repository.saveTag(tag)
         var allTags = repository.getAllTags().first()
