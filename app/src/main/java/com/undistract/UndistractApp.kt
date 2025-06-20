@@ -2,6 +2,7 @@ package com.undistract
 
 import android.app.Application
 import androidx.room.Room
+import com.undistract.data.local.MIGRATION_1_2
 import com.undistract.data.local.UndistractDatabase
 import com.undistract.managers.AppBlockerManager
 import com.undistract.managers.ProfileManager
@@ -25,7 +26,7 @@ class UndistractApp : Application() {
             this,
             UndistractDatabase::class.java,
             "undistract-db"
-        ).build()
+        ).addMigrations(MIGRATION_1_2).build()
     }
 
     companion object {

@@ -9,5 +9,5 @@ import androidx.room.PrimaryKey
 data class NfcTagEntity(
     @PrimaryKey val id: String,
     val payload: String,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Date = Date()
 )
