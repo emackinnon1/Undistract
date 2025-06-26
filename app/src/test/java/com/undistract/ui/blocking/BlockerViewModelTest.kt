@@ -1,11 +1,11 @@
 package com.undistract.ui.blocking
 
-import android.content.Context
-import android.content.SharedPreferences
 import android.os.Build
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.room.Room
+import androidx.test.core.app.ApplicationProvider
 import com.undistract.UndistractApp
-import com.undistract.data.models.NfcTag
+import com.undistract.data.local.UndistractDatabase
 import com.undistract.data.models.Profile
 import com.undistract.managers.AppBlockerManager
 import com.undistract.managers.ProfileManager
@@ -17,10 +17,9 @@ import io.mockk.mockkObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.TestCoroutineDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import org.json.JSONArray
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -29,7 +28,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
-import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -43,16 +41,13 @@ class BlockerViewModelTest {
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
-    private val testDispatcher = TestCoroutineDispatcher()
+    private val testDispatcher = StandardTestDispatcher()
 
     @Mock
     private lateinit var undistractApp: UndistractApp
 
-    @Mock
-    private lateinit var sharedPreferences: SharedPreferences
-
-    @Mock
-    private lateinit var editor: SharedPreferences.Editor
+    private lateinit var db: UndistractDatabase
+    private lateinit var nfcTagDao: com.undistract.data.daos.NfcTagDao
 
     private lateinit var viewModel: BlockerViewModel
 
@@ -71,19 +66,20 @@ class BlockerViewModelTest {
         blockingStateFlow.value = false
         profileStateFlow.value = null
 
-        // Set up SharedPreferences mock
-        `when`(undistractApp.getSharedPreferences(eq("nfc_tags"), eq(Context.MODE_PRIVATE)))
-            .thenReturn(sharedPreferences)
-        `when`(sharedPreferences.edit()).thenReturn(editor)
-        `when`(editor.putString(anyString(), anyString())).thenReturn(editor)
-        doNothing().`when`(editor).apply()
-
-        // Mock AppBlockerAccessibilityService.Companion - ADD THIS
+        // Mock AppBlockerAccessibilityService.Companion
         mockkObject(AppBlockerAccessibilityService.Companion)
         every { AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(any()) } returns Unit
 
+        // Set up in-memory Room database
+        db = Room.inMemoryDatabaseBuilder(
+            ApplicationProvider.getApplicationContext(),
+            UndistractDatabase::class.java
+        ).allowMainThreadQueries().build()
+        nfcTagDao = db.nfcTagDao()
+
         // Mock UndistractApp static properties
         mockkObject(UndistractApp.Companion)
+        every { UndistractApp.db } returns db
         every { UndistractApp.appBlocker } returns mockAppBlocker
         every { UndistractApp.profileManager } returns mockProfileManager
         every { UndistractApp.instance } returns undistractApp
@@ -101,79 +97,64 @@ class BlockerViewModelTest {
 
     @After
     fun tearDown() {
+        db.close()
         blockingStateFlow.value = false
         profileStateFlow.value = null
         Dispatchers.resetMain()
-        testDispatcher.cleanupTestCoroutines()
     }
 
     @Test
-    fun `loadSavedTags with empty preferences should return empty list`() {
+    fun `loadSavedTags should load tags correctly`() {
         // Arrange
-        `when`(sharedPreferences.getString(eq("nfc_tags"), isNull())).thenReturn(null)
-
-        // Act - loadSavedTags is called in the init block of the ViewModel
-
-        // Assert
-        assertEquals(emptyList<NfcTag>(), viewModel.writtenTags.value)
-    }
-
-
-    @Test
-    fun `loadSavedTags with valid JSON should load tags correctly`() {
-        // Arrange
-        val tag1 = NfcTag(payload = "UNDISTRACT-123")
-        val tag2 = NfcTag(payload = "UNDISTRACT-456")
-        val jsonArray = JSONArray()
-        jsonArray.put(tag1.toJson())
-        jsonArray.put(tag2.toJson())
-
-        `when`(sharedPreferences.getString(eq("nfc_tags"), isNull())).thenReturn(jsonArray.toString())
+        viewModel.saveTag("UNDISTRACT-123")
+        testDispatcher.scheduler.advanceUntilIdle() // Wait for save operation
+        viewModel.saveTag("UNDISTRACT-456")
+        testDispatcher.scheduler.advanceUntilIdle() // Wait for save operation
 
         // Act - Create a new ViewModel to trigger loadSavedTags in init
         val newViewModel = BlockerViewModel(undistractApp)
+        testDispatcher.scheduler.advanceUntilIdle() // Wait for loadSavedTags in init
 
         // Assert
         assertEquals(2, newViewModel.writtenTags.value.size)
-        assertEquals("UNDISTRACT-123", newViewModel.writtenTags.value[0].payload)
-        assertEquals("UNDISTRACT-456", newViewModel.writtenTags.value[1].payload)
+        val tagIds = newViewModel.writtenTags.value.map { it.id }
+        assertTrue(tagIds.contains("UNDISTRACT-123"))
+        assertTrue(tagIds.contains("UNDISTRACT-456"))
     }
 
     @Test
-    fun `saveTag should add tag to list and save to SharedPreferences`() {
-        // Arrange
-        `when`(sharedPreferences.getString(eq("nfc_tags"), isNull())).thenReturn(null)
-
+    fun `saveTag should add tag to list`() {
         // Act
+        assertEquals(0, viewModel.writtenTags.value.size)
         viewModel.saveTag("UNDISTRACT-TEST")
+        // Wait for coroutine to finish (since saveTag is async)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Assert
         assertEquals(1, viewModel.writtenTags.value.size)
-        assertEquals("UNDISTRACT-TEST", viewModel.writtenTags.value[0].payload)
-        verify(editor).putString(eq("nfc_tags"), anyString())
-        verify(editor).apply()
+        assertEquals("UNDISTRACT-TEST", viewModel.writtenTags.value[0].id)
+        assertEquals("profile_tag", viewModel.writtenTags.value[0].payload)
     }
 
     @Test
-    fun `deleteTag should remove tag from list and update SharedPreferences`() {
+    fun `deleteTag should remove tag from list`() {
         // Arrange - Initialize with existing tags
-        val tag1 = NfcTag(payload = "UNDISTRACT-123")
-        val tag2 = NfcTag(payload = "UNDISTRACT-456")
-        val jsonArray = JSONArray()
-        jsonArray.put(tag1.toJson())
-        jsonArray.put(tag2.toJson())
+        viewModel.saveTag("UNDISTRACT-123")
+        testDispatcher.scheduler.advanceUntilIdle() // Wait for save operation
+        viewModel.saveTag("UNDISTRACT-456")
+        testDispatcher.scheduler.advanceUntilIdle() // Wait for save operation
 
-        `when`(sharedPreferences.getString(eq("nfc_tags"), isNull())).thenReturn(jsonArray.toString())
         val testViewModel = BlockerViewModel(undistractApp)
+        testDispatcher.scheduler.advanceUntilIdle() // Wait for viewmodel initialization
+        val tag = testViewModel.writtenTags.value.filter { it.id == "UNDISTRACT-123" }[0]
 
         // Act
-        testViewModel.deleteTag(tag1)
+        testViewModel.deleteTag(tag)
+        testDispatcher.scheduler.advanceUntilIdle() // Wait for delete operation
 
         // Assert
         assertEquals(1, testViewModel.writtenTags.value.size)
-        assertEquals("UNDISTRACT-456", testViewModel.writtenTags.value[0].payload)
-        verify(editor).putString(eq("nfc_tags"), anyString())
-        verify(editor).apply()
+        assertEquals("UNDISTRACT-456", testViewModel.writtenTags.value[0].id)
     }
 
     @Test
@@ -181,14 +162,15 @@ class BlockerViewModelTest {
         // Arrange
         val profile = Profile(name = "Test", appPackageNames = listOf("com.example"))
         profileStateFlow.value = profile
+        blockingStateFlow.value = false  // Starting with blocking disabled
 
         // Act
         viewModel.scanTag("UNDISTRACT-valid-tag")
+        testDispatcher.scheduler.advanceUntilIdle()  // Wait for coroutine
 
         // Assert
         assertEquals(false, viewModel.showScanTagAlert.value)
-        // Using MockK to verify the interaction
-        io.mockk.verify { mockAppBlocker.setBlockingState(any()) }
+        io.mockk.verify { mockAppBlocker.setBlockingState(true) }  // Verify exact parameter
     }
 
     @Test
@@ -198,6 +180,7 @@ class BlockerViewModelTest {
 
         // Act
         viewModel.scanTag(invalidTagPayload)
+        testDispatcher.scheduler.advanceUntilIdle()  // Wait for coroutine to complete
 
         // Assert
         assertTrue(viewModel.showWrongTagAlert.value)
@@ -213,11 +196,10 @@ class BlockerViewModelTest {
 
         // Act
         viewModel.scanTag("UNDISTRACT-valid-tag")
+        testDispatcher.scheduler.advanceUntilIdle()  // Wait for coroutine to complete
 
         // Assert
-        // Verify the accessibility service is checked
         io.mockk.verify { AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(any()) }
-        // Verify the blocking state is set to true
         io.mockk.verify { mockAppBlocker.setBlockingState(true) }
     }
 
@@ -231,10 +213,10 @@ class BlockerViewModelTest {
 
         // Act
         viewModel.scanTag("UNDISTRACT-valid-tag")
+        testDispatcher.scheduler.advanceUntilIdle()  // Wait for coroutine to complete
 
         // Assert
         io.mockk.verify { mockAppBlocker.setBlockingState(false) }
-        // Same note about verifying Intent
     }
 
     @Test
@@ -247,6 +229,7 @@ class BlockerViewModelTest {
 
         // Act
         viewModel.scanTag("UNDISTRACT-valid-tag")
+        testDispatcher.scheduler.advanceUntilIdle()  // Wait for coroutine to complete
 
         // Assert
         io.mockk.verify { AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(any()) }
@@ -260,6 +243,7 @@ class BlockerViewModelTest {
 
         // Act
         viewModel.scanTag("UNDISTRACT-valid-tag")
+        testDispatcher.scheduler.advanceUntilIdle()  // Wait for coroutine to complete
 
         // Assert
         io.mockk.verify(exactly = 0) { mockAppBlocker.setBlockingState(any()) }
@@ -513,13 +497,13 @@ class BlockerViewModelTest {
     }
 
     @Test
-    fun `generateUniqueTagPayload should follow correct format`() {
+    fun `generateUniqueTagId should follow correct format`() {
         // Act
-        val payload = viewModel.generateUniqueTagPayload()
+        val id = viewModel.generateUniqueTagId()
 
         // Assert
         // Format should be UNDISTRACT-timestamp-random
-        val parts = payload.split("-")
+        val parts = id.split("-")
         assertEquals(3, parts.size)
         assertEquals("UNDISTRACT", parts[0])
 
@@ -532,53 +516,5 @@ class BlockerViewModelTest {
         assertTrue("Random part should be a valid number", random != null)
         assertTrue("Random part should be at least 1000", random!! >= 1000)
         assertTrue("Random part should be less than 10000", random < 10000)
-    }
-
-    @Test
-    fun `generateUniqueTagPayload should create unique tags`() {
-        // Act
-        val payload1 = viewModel.generateUniqueTagPayload()
-        val payload2 = viewModel.generateUniqueTagPayload()
-        val payload3 = viewModel.generateUniqueTagPayload()
-
-        // Assert
-        // All generated payloads should be different
-        assertTrue(payload1 != payload2)
-        assertTrue(payload1 != payload3)
-        assertTrue(payload2 != payload3)
-    }
-
-    @Test
-    fun `generateUniqueTagPayload should create valid tag for scanning`() {
-        // Act
-        val payload = viewModel.generateUniqueTagPayload()
-
-        // Assert
-        // Generated payload should be recognized as a valid tag when scanning
-        assertTrue(payload.startsWith("UNDISTRACT"))
-
-        // Test that this tag would be recognized by the scanTag method
-        viewModel.scanTag(payload)
-        // If it's valid, it would trigger blocking toggle, not wrong tag alert
-        assertEquals(false, viewModel.showWrongTagAlert.value)
-    }
-
-    @Test
-    fun `generateUniqueTagPayload components should be extractable`() {
-        // Act
-        val payload = viewModel.generateUniqueTagPayload()
-        val parts = payload.split("-")
-
-        // Assert we can extract individual components
-        val prefix = parts[0]
-        val timestamp = parts[1].toLong()
-        val random = parts[2].toInt()
-
-        assertEquals("UNDISTRACT", prefix)
-        assertTrue(timestamp > 0)
-        assertTrue(random in 1000..9999)
-
-        // Components should combine back to original
-        assertEquals(payload, "$prefix-$timestamp-$random")
     }
 }

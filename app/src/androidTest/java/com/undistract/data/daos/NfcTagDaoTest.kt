@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.*
 import org.junit.runner.RunWith
+import java.util.Date
+
 
 @RunWith(AndroidJUnit4::class)
 class NfcTagDaoTest {
@@ -36,7 +38,7 @@ class NfcTagDaoTest {
 
     @Test
     fun insert_and_getById() = runBlocking {
-        val tag = NfcTagEntity("1", "payload", 123L)
+        val tag = NfcTagEntity("1", "payload")
         dao.insert(tag)
         val loaded = dao.getById("1")
         Assert.assertEquals(tag, loaded)
@@ -44,8 +46,10 @@ class NfcTagDaoTest {
 
     @Test
     fun insert_and_getAll() = runBlocking {
-        val tag1 = NfcTagEntity("1", "payload1", 123L)
-        val tag2 = NfcTagEntity("2", "payload2", 124L)
+        val now = Date()
+        val later = Date(now.time + 1000)
+        val tag1 = NfcTagEntity("1", "payload1", now)
+        val tag2 = NfcTagEntity("2", "payload2", later)
         dao.insert(tag1)
         dao.insert(tag2)
         val all = dao.getAll().first()
@@ -54,7 +58,7 @@ class NfcTagDaoTest {
 
     @Test
     fun update_tag() = runBlocking {
-        val tag = NfcTagEntity("1", "payload", 123L)
+        val tag = NfcTagEntity("1", "payload")
         dao.insert(tag)
         val updated = tag.copy(payload = "new_payload")
         dao.update(updated)
@@ -64,7 +68,7 @@ class NfcTagDaoTest {
 
     @Test
     fun delete_tag() = runBlocking {
-        val tag = NfcTagEntity("1", "payload", 123L)
+        val tag = NfcTagEntity("1", "payload")
         dao.insert(tag)
         dao.delete(tag)
         val loaded = dao.getById("1")

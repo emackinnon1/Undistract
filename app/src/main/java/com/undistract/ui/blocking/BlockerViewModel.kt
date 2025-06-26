@@ -7,14 +7,17 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.undistract.UndistractApp
-import com.undistract.data.models.NfcTag
+import com.undistract.data.entities.NfcTagEntity
+import com.undistract.data.repositories.NfcTagRepository
+import com.undistract.data.repositories.NfcTagRepositoryImpl
 import com.undistract.services.AppBlockerAccessibilityService
 import com.undistract.services.BlockerService
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.json.JSONArray
+
 
 /**
  * ViewModel responsible for managing app blocking functionality using NFC tags.
@@ -53,7 +56,7 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
 
     // State flows
     /** List of NFC tags written by the user */
-    private val _writtenTags = MutableStateFlow<List<NfcTag>>(emptyList())
+    private val _writtenTags = MutableStateFlow<List<NfcTagEntity>>(emptyList())
     /** Public immutable flow of written NFC tags */
     val writtenTags = _writtenTags.asStateFlow()
 
@@ -93,11 +96,15 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
     /** Current profile from the profile manager */
     val currentProfile = profileManager.currentProfile
 
+    val db = UndistractApp.db
+    val nfcTagDao = db.nfcTagDao()
+    val nfcTagRepo: NfcTagRepository = NfcTagRepositoryImpl(nfcTagDao)
+
     /**
      * Initializes the ViewModel and loads saved NFC tags from SharedPreferences.
      */
     init {
-        loadSavedTags()
+        viewModelScope.launch { loadSavedTags() }
     }
 
     /**
@@ -106,28 +113,11 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
      * Tags are stored as a JSON array string and converted back to NfcTag objects.
      * If no tags are found or an error occurs, an empty list is set.
      */
-    private fun loadSavedTags() {
-        try {
-            val tagsJson = prefs.getString(TAGS_KEY, null)
-            if (tagsJson.isNullOrEmpty()) {
-                _writtenTags.value = emptyList()
-                return
-            }
 
-            Log.d(TAG, "Loading tags JSON: $tagsJson")
-            val jsonArray = JSONArray(tagsJson)
-            val tagsList = mutableListOf<NfcTag>()
-
-            for (i in 0 until jsonArray.length()) {
-                tagsList.add(NfcTag.fromJson(jsonArray.getJSONObject(i)))
-            }
-
-            _writtenTags.value = tagsList
-            Log.d(TAG, "Loaded ${tagsList.size} tags")
-        } catch (e: Exception) {
-            Log.e(TAG, "Error loading saved tags", e)
-            _writtenTags.value = emptyList()
-        }
+    private suspend fun loadSavedTags() {
+        // Get all tags from the repository (Room DB)
+        val entities = nfcTagRepo.getAllTags().first()
+        _writtenTags.value = entities
     }
 
     /**
@@ -135,19 +125,16 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
      *
      * The tag is added to the in-memory list and persisted to SharedPreferences.
      *
-     * @param payload The string payload to save in the NFC tag
+     * @param uniqueId The unique id to save in as the primary key for the NFC tag
+     * TODO: payload is hardcoded to "profile_tag" for now, it will be dynamic as features expand
      */
-    fun saveTag(payload: String) {
-        val newTag = NfcTag(payload = payload)
-        val updatedTags = _writtenTags.value.toMutableList().apply { add(newTag) }
-        _writtenTags.value = updatedTags
-
-        // Persist to SharedPreferences
-        prefs.edit().putString(TAGS_KEY, JSONArray().apply {
-            updatedTags.forEach { put(it.toJson()) }
-        }.toString()).apply()
-
-        Log.d(TAG, "Saved tag: $payload, total: ${updatedTags.size}")
+    fun saveTag(uniqueId: String) {
+        viewModelScope.launch {
+            val newTag = NfcTagEntity(id = uniqueId, payload = "profile_tag")
+            nfcTagRepo.saveTag(newTag)
+            loadSavedTags()
+            Log.d(TAG, "Saved tag with id: $uniqueId")
+        }
     }
 
     /**
@@ -156,13 +143,13 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
      * If the payload starts with the valid prefix, app blocking is toggled.
      * Otherwise, shows an alert for an invalid tag.
      *
-     * @param payload The string payload from the scanned NFC tag
+     * @param id The string payload from the scanned NFC tag
      */
-    fun scanTag(payload: String) {
+    fun scanTag(id: String) {
         viewModelScope.launch {
             dismissScanTagAlert()
 
-            if (payload.startsWith(VALID_TAG_PREFIX)) {
+            if (id.startsWith(VALID_TAG_PREFIX)) {
                 toggleBlocking()
             } else {
                 showWrongTagAlert()
@@ -175,20 +162,14 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
      *
      * The tag is removed from the in-memory list and the change is persisted to SharedPreferences.
      *
-     * @param tag The NfcTag object to delete
+     * @param tag The NfcTagEntity object to delete
      */
-    fun deleteTag(tag: NfcTag) {
-        val updatedTags = _writtenTags.value.toMutableList().apply {
-            remove(tag)
+    fun deleteTag(tag: NfcTagEntity) {
+        viewModelScope.launch {
+            nfcTagRepo.deleteTag(tag)
+            loadSavedTags()
+            Log.d(TAG, "Deleted tag with id: ${tag.id}")
         }
-        _writtenTags.value = updatedTags
-
-        // Persist to SharedPreferences
-        prefs.edit().putString(TAGS_KEY, JSONArray().apply {
-            updatedTags.forEach { put(it.toJson()) }
-        }.toString()).apply()
-
-        Log.d(TAG, "Deleted tag: ${tag.payload}, remaining: ${updatedTags.size}")
     }
 
     /**
@@ -242,7 +223,7 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
      *
      * @return A unique string payload for a new NFC tag
      */
-    fun generateUniqueTagPayload(): String {
+    fun generateUniqueTagId(): String {
         val timestamp = System.currentTimeMillis()
         val random = (1000 + kotlin.random.Random.nextInt(9000))  // 4-digit number
         return "$VALID_TAG_PREFIX-$timestamp-$random"
