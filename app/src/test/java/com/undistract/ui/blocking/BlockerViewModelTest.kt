@@ -79,7 +79,6 @@ class BlockerViewModelTest {
 
         // Mock UndistractApp static properties
         mockkObject(UndistractApp.Companion)
-        mockkObject(UndistractApp.Companion)
         every { UndistractApp.db } returns db
         every { UndistractApp.appBlocker } returns mockAppBlocker
         every { UndistractApp.profileManager } returns mockProfileManager
