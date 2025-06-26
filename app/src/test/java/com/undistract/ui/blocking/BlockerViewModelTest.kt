@@ -1,7 +1,5 @@
 package com.undistract.ui.blocking
 
-import android.content.Context
-import android.content.SharedPreferences
 import android.os.Build
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.room.Room
@@ -19,7 +17,7 @@ import io.mockk.mockkObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.TestCoroutineDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -30,7 +28,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
-import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -44,16 +41,10 @@ class BlockerViewModelTest {
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
-    private val testDispatcher = TestCoroutineDispatcher()
+    private val testDispatcher = StandardTestDispatcher()
 
     @Mock
     private lateinit var undistractApp: UndistractApp
-
-    @Mock
-    private lateinit var sharedPreferences: SharedPreferences
-
-    @Mock
-    private lateinit var editor: SharedPreferences.Editor
 
     private lateinit var db: UndistractDatabase
     private lateinit var nfcTagDao: com.undistract.data.daos.NfcTagDao
@@ -74,13 +65,6 @@ class BlockerViewModelTest {
         // Reset state flows
         blockingStateFlow.value = false
         profileStateFlow.value = null
-
-        // Set up SharedPreferences mock
-        `when`(undistractApp.getSharedPreferences(eq("nfc_tags"), eq(Context.MODE_PRIVATE)))
-            .thenReturn(sharedPreferences)
-        `when`(sharedPreferences.edit()).thenReturn(editor)
-        `when`(editor.putString(anyString(), anyString())).thenReturn(editor)
-        doNothing().`when`(editor).apply()
 
         // Mock AppBlockerAccessibilityService.Companion
         mockkObject(AppBlockerAccessibilityService.Companion)
@@ -118,17 +102,19 @@ class BlockerViewModelTest {
         blockingStateFlow.value = false
         profileStateFlow.value = null
         Dispatchers.resetMain()
-        testDispatcher.cleanupTestCoroutines()
     }
 
     @Test
     fun `loadSavedTags should load tags correctly`() {
         // Arrange
         viewModel.saveTag("UNDISTRACT-123")
+        testDispatcher.scheduler.advanceUntilIdle() // Wait for save operation
         viewModel.saveTag("UNDISTRACT-456")
+        testDispatcher.scheduler.advanceUntilIdle() // Wait for save operation
 
         // Act - Create a new ViewModel to trigger loadSavedTags in init
         val newViewModel = BlockerViewModel(undistractApp)
+        testDispatcher.scheduler.advanceUntilIdle() // Wait for loadSavedTags in init
 
         // Assert
         assertEquals(2, newViewModel.writtenTags.value.size)
@@ -151,21 +137,24 @@ class BlockerViewModelTest {
     }
 
     @Test
-    fun `deleteTag should remove tag from list and update SharedPreferences`() {
+    fun `deleteTag should remove tag from list`() {
         // Arrange - Initialize with existing tags
         viewModel.saveTag("UNDISTRACT-123")
+        testDispatcher.scheduler.advanceUntilIdle() // Wait for save operation
         viewModel.saveTag("UNDISTRACT-456")
+        testDispatcher.scheduler.advanceUntilIdle() // Wait for save operation
 
         val testViewModel = BlockerViewModel(undistractApp)
+        testDispatcher.scheduler.advanceUntilIdle() // Wait for viewmodel initialization
         val tag = testViewModel.writtenTags.value.filter { it.id == "UNDISTRACT-123" }[0]
 
         // Act
         testViewModel.deleteTag(tag)
+        testDispatcher.scheduler.advanceUntilIdle() // Wait for delete operation
 
         // Assert
         assertEquals(1, testViewModel.writtenTags.value.size)
         assertEquals("UNDISTRACT-456", testViewModel.writtenTags.value[0].id)
-
     }
 
     @Test
