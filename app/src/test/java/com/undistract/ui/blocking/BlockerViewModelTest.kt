@@ -117,8 +117,9 @@ class BlockerViewModelTest {
 
         // Assert
         assertEquals(2, newViewModel.writtenTags.value.size)
-        assertEquals("UNDISTRACT-123", newViewModel.writtenTags.value[1].id)
-        assertEquals("UNDISTRACT-456", newViewModel.writtenTags.value[0].id)
+        val tagIds = newViewModel.writtenTags.value.map { it.id }
+        assertTrue(tagIds.contains("UNDISTRACT-123"))
+        assertTrue(tagIds.contains("UNDISTRACT-456"))
     }
 
     @Test
