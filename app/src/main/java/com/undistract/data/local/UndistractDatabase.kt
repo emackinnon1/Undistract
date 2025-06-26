@@ -19,6 +19,7 @@ import com.undistract.data.helpers.DateTypeConverters
 //        EmergencyUsageEntity::class // TODO: Placeholder for future implementation of emergency usage tracking.
     ],
     version = 2,
+//    TODO: Uncomment and implement auto-migrations when needed.
 //    autoMigrations = [
 //    AutoMigration (
 //      from = 1,
