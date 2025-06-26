@@ -8,7 +8,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.undistract.UndistractApp
 import com.undistract.data.entities.NfcTagEntity
-//import com.undistract.data.models.NfcTag
 import com.undistract.data.repositories.NfcTagRepository
 import com.undistract.data.repositories.NfcTagRepositoryImpl
 import com.undistract.services.AppBlockerAccessibilityService
@@ -18,7 +17,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import org.json.JSONArray
+
 
 /**
  * ViewModel responsible for managing app blocking functionality using NFC tags.
@@ -106,7 +105,6 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
      */
     init {
         viewModelScope.launch { loadSavedTags() }
-//        loadSavedTags()
     }
 
     /**
@@ -115,35 +113,10 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
      * Tags are stored as a JSON array string and converted back to NfcTag objects.
      * If no tags are found or an error occurs, an empty list is set.
      */
-//    private fun loadSavedTags() {
-//        try {
-//            val tagsJson = prefs.getString(TAGS_KEY, null)
-//            if (tagsJson.isNullOrEmpty()) {
-//                _writtenTags.value = emptyList()
-//                return
-//            }
-//
-//            Log.d(TAG, "Loading tags JSON: $tagsJson")
-//            val jsonArray = JSONArray(tagsJson)
-//            val tagsList = mutableListOf<NfcTag>()
-//
-//            for (i in 0 until jsonArray.length()) {
-//                tagsList.add(NfcTag.fromJson(jsonArray.getJSONObject(i)))
-//            }
-//
-//            _writtenTags.value = tagsList
-//            Log.d(TAG, "Loaded ${tagsList.size} tags")
-//        } catch (e: Exception) {
-//            Log.e(TAG, "Error loading saved tags", e)
-//            _writtenTags.value = emptyList()
-//        }
-//    }
 
     private suspend fun loadSavedTags() {
         // Get all tags from the repository (Room DB)
         val entities = nfcTagRepo.getAllTags().first()
-//        val jsonArray = JSONArray()
-//        entities.forEach { jsonArray.put(it) }
         _writtenTags.value = entities
     }
 
@@ -163,18 +136,6 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
             Log.d(TAG, "Saved tag with id: $uniqueId")
         }
     }
-//    fun saveTag(uniqueId: String) {
-//        val newTag = NfcTagEntity(id = uniqueId, payload = "profile_tag")
-//        val updatedTags = _writtenTags.value.toMutableList().apply { add(newTag) }
-//        _writtenTags.value = updatedTags
-//
-//        // Persist to SharedPreferences
-//        prefs.edit().putString(TAGS_KEY, JSONArray().apply {
-//            updatedTags.forEach { put(it) }
-//        }.toString()).apply()
-//
-//        Log.d(TAG, "Saved tag with id: $uniqueId, total: ${updatedTags.size}")
-//    }
 
     /**
      * Processes a scanned NFC tag by validating its payload.
@@ -210,19 +171,6 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
             Log.d(TAG, "Deleted tag with id: ${tag.id}")
         }
     }
-//    fun deleteTag(tag: NfcTagEntity) {
-//        val updatedTags = _writtenTags.value.toMutableList().apply {
-//            remove(tag)
-//        }
-//        _writtenTags.value = updatedTags
-//
-//        // Persist to SharedPreferences
-//        prefs.edit().putString(TAGS_KEY, JSONArray().apply {
-//            updatedTags.forEach { put(it) }
-//        }.toString()).apply()
-//
-//        Log.d(TAG, "Deleted tag: ${tag.payload}, remaining: ${updatedTags.size}")
-//    }
 
     /**
      * Toggles the app blocking state based on the current profile.

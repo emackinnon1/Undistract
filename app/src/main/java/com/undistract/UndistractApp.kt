@@ -22,11 +22,7 @@ class UndistractApp : Application() {
         instance = this
         appBlockerManager = AppBlockerManager(this)
         this@UndistractApp.profileManager = ProfileManager(this)
-        database = Room.databaseBuilder(
-            this,
-            UndistractDatabase::class.java,
-            "undistract-db"
-        ).addMigrations(MIGRATION_1_2).build()
+        database = UndistractDatabase.getDatabase(this)
     }
 
     companion object {
