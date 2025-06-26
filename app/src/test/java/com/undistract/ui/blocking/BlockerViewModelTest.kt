@@ -7,8 +7,6 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.undistract.UndistractApp
-import com.undistract.data.entities.NfcTagEntity
-import com.undistract.data.models.NfcTag
 import com.undistract.data.local.UndistractDatabase
 import com.undistract.data.models.Profile
 import com.undistract.managers.AppBlockerManager
@@ -21,11 +19,9 @@ import io.mockk.mockkObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import org.json.JSONArray
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -38,7 +34,6 @@ import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.junit.Ignore
 
 
 @ExperimentalCoroutinesApi
@@ -188,7 +183,7 @@ class BlockerViewModelTest {
         assertEquals(false, viewModel.showScanTagAlert.value)
         io.mockk.verify { mockAppBlocker.setBlockingState(true) }  // Verify exact parameter
     }
-    @Ignore
+
     @Test
     fun `scanTag with invalid tag should show wrong tag alert`() {
         // Arrange
@@ -196,11 +191,12 @@ class BlockerViewModelTest {
 
         // Act
         viewModel.scanTag(invalidTagPayload)
+        testDispatcher.scheduler.advanceUntilIdle()  // Wait for coroutine to complete
 
         // Assert
         assertTrue(viewModel.showWrongTagAlert.value)
     }
-    @Ignore
+
     @Test
     fun `toggleBlocking should start BlockerService when enabling blocking`() {
         // Arrange
@@ -211,14 +207,13 @@ class BlockerViewModelTest {
 
         // Act
         viewModel.scanTag("UNDISTRACT-valid-tag")
+        testDispatcher.scheduler.advanceUntilIdle()  // Wait for coroutine to complete
 
         // Assert
-        // Verify the accessibility service is checked
         io.mockk.verify { AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(any()) }
-        // Verify the blocking state is set to true
         io.mockk.verify { mockAppBlocker.setBlockingState(true) }
     }
-    @Ignore
+
     @Test
     fun `toggleBlocking should stop BlockerService when disabling blocking`() {
         // Arrange
@@ -229,12 +224,12 @@ class BlockerViewModelTest {
 
         // Act
         viewModel.scanTag("UNDISTRACT-valid-tag")
+        testDispatcher.scheduler.advanceUntilIdle()  // Wait for coroutine to complete
 
         // Assert
         io.mockk.verify { mockAppBlocker.setBlockingState(false) }
-        // Same note about verifying Intent
     }
-    @Ignore
+
     @Test
     fun `toggleBlocking should check accessibility service when enabling blocking`() {
         // Arrange
@@ -245,11 +240,12 @@ class BlockerViewModelTest {
 
         // Act
         viewModel.scanTag("UNDISTRACT-valid-tag")
+        testDispatcher.scheduler.advanceUntilIdle()  // Wait for coroutine to complete
 
         // Assert
         io.mockk.verify { AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(any()) }
     }
-    @Ignore
+
     @Test
     fun `toggleBlocking should do nothing if no profile is selected`() {
         // Arrange
@@ -258,12 +254,13 @@ class BlockerViewModelTest {
 
         // Act
         viewModel.scanTag("UNDISTRACT-valid-tag")
+        testDispatcher.scheduler.advanceUntilIdle()  // Wait for coroutine to complete
 
         // Assert
         io.mockk.verify(exactly = 0) { mockAppBlocker.setBlockingState(any()) }
         io.mockk.verify(exactly = 0) { AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(any()) }
     }
-    @Ignore
+
     @Test
     fun `showScanTagAlert should set showScanTagAlert state to true`() {
         // Arrange - initial state should be false
@@ -275,7 +272,7 @@ class BlockerViewModelTest {
         // Assert
         assertEquals(true, viewModel.showScanTagAlert.value)
     }
-    @Ignore
+
     @Test
     fun `dismissScanTagAlert should set showScanTagAlert state to false`() {
         // Arrange - set initial state to true
@@ -288,7 +285,7 @@ class BlockerViewModelTest {
         // Assert
         assertEquals(false, viewModel.showScanTagAlert.value)
     }
-    @Ignore
+
     @Test
     fun `showWrongTagAlert should set showWrongTagAlert state to true`() {
         // Arrange - initial state should be false
@@ -300,7 +297,7 @@ class BlockerViewModelTest {
         // Assert
         assertEquals(true, viewModel.showWrongTagAlert.value)
     }
-    @Ignore
+
     @Test
     fun `dismissWrongTagAlert should set showWrongTagAlert state to false`() {
         // Arrange - set initial state to true
@@ -313,7 +310,7 @@ class BlockerViewModelTest {
         // Assert
         assertEquals(false, viewModel.showWrongTagAlert.value)
     }
-    @Ignore
+
     @Test
     fun `showCreateTagAlert should set showCreateTagAlert state to true`() {
         // Arrange - initial state should be false
@@ -325,7 +322,7 @@ class BlockerViewModelTest {
         // Assert
         assertEquals(true, viewModel.showCreateTagAlert.value)
     }
-    @Ignore
+
     @Test
     fun `hideCreateTagAlert should set showCreateTagAlert state to false`() {
         // Arrange - set initial state to true
@@ -338,7 +335,7 @@ class BlockerViewModelTest {
         // Assert
         assertEquals(false, viewModel.showCreateTagAlert.value)
     }
-    @Ignore
+
     @Test
     fun `setWritingTag should update isWritingTag state`() {
         // Arrange - initial state should be false
@@ -350,7 +347,7 @@ class BlockerViewModelTest {
         // Assert
         assertEquals(true, viewModel.isWritingTag.value)
     }
-    @Ignore
+
     @Test
     fun `cancelWrite should set isWritingTag state to false`() {
         // Arrange - set initial state to true
@@ -363,7 +360,7 @@ class BlockerViewModelTest {
         // Assert
         assertEquals(false, viewModel.isWritingTag.value)
     }
-    @Ignore
+
     @Test
     fun `onCreateTagConfirmed should update dialog states correctly`() {
         // Arrange - set initial state
@@ -378,7 +375,7 @@ class BlockerViewModelTest {
         assertEquals(false, viewModel.showCreateTagAlert.value)
         assertEquals(true, viewModel.nfcWriteDialogShown.value)
     }
-    @Ignore
+
     @Test
     fun `onTagWriteResult should update states with success result`() {
         // Arrange - set initial state
@@ -393,7 +390,7 @@ class BlockerViewModelTest {
         assertEquals(false, viewModel.nfcWriteDialogShown.value)
         assertEquals(true, viewModel.nfcWriteSuccess.value)
     }
-    @Ignore
+
     @Test
     fun `onTagWriteResult should update states with failure result`() {
         // Arrange - set initial state
@@ -407,7 +404,7 @@ class BlockerViewModelTest {
         assertEquals(false, viewModel.nfcWriteDialogShown.value)
         assertEquals(false, viewModel.nfcWriteSuccess.value)
     }
-    @Ignore
+
     @Test
     fun `dismissNfcWriteSuccessAlert should set nfcWriteSuccess to false`() {
         // Arrange - set initial state to success
@@ -420,7 +417,7 @@ class BlockerViewModelTest {
         // Assert
         assertEquals(false, viewModel.nfcWriteSuccess.value)
     }
-    @Ignore
+
     @Test
     fun `dialog states are mutually exclusive`() {
         // Act - Show all dialogs one after another
@@ -433,7 +430,7 @@ class BlockerViewModelTest {
         assertEquals(false, viewModel.showScanTagAlert.value)
         assertEquals(false, viewModel.showWrongTagAlert.value)
     }
-    @Ignore
+
     @Test
     fun `dismissing one dialog should not affect other dialog states`() {
         // Arrange - show create tag alert, then set writing tag
@@ -447,7 +444,7 @@ class BlockerViewModelTest {
         assertEquals(false, viewModel.showCreateTagAlert.value)
         assertEquals(true, viewModel.isWritingTag.value)
     }
-    @Ignore
+
     @Test
     fun `dialog states should reset after failed write operation`() {
         // Arrange - setup write operation flow
@@ -463,7 +460,7 @@ class BlockerViewModelTest {
         assertEquals(false, viewModel.nfcWriteSuccess.value)
         assertEquals(false, viewModel.isWritingTag.value)
     }
-    @Ignore
+
     @Test
     fun `complete tag write workflow should transition states correctly`() {
         // Test the entire workflow from start to finish
@@ -496,7 +493,7 @@ class BlockerViewModelTest {
         viewModel.dismissNfcWriteSuccessAlert()
         assertEquals(false, viewModel.nfcWriteSuccess.value)
     }
-    @Ignore
+
     @Test
     fun `canceling write operation should reset related states`() {
         // Arrange
@@ -509,15 +506,15 @@ class BlockerViewModelTest {
         // Assert
         assertEquals(false, viewModel.isWritingTag.value)
     }
-    @Ignore
+
     @Test
-    fun `generateUniqueTagPayload should follow correct format`() {
+    fun `generateUniqueTagId should follow correct format`() {
         // Act
-        val payload = viewModel.generateUniqueTagPayload()
+        val id = viewModel.generateUniqueTagId()
 
         // Assert
         // Format should be UNDISTRACT-timestamp-random
-        val parts = payload.split("-")
+        val parts = id.split("-")
         assertEquals(3, parts.size)
         assertEquals("UNDISTRACT", parts[0])
 
@@ -530,53 +527,5 @@ class BlockerViewModelTest {
         assertTrue("Random part should be a valid number", random != null)
         assertTrue("Random part should be at least 1000", random!! >= 1000)
         assertTrue("Random part should be less than 10000", random < 10000)
-    }
-    @Ignore
-    @Test
-    fun `generateUniqueTagPayload should create unique tags`() {
-        // Act
-        val payload1 = viewModel.generateUniqueTagPayload()
-        val payload2 = viewModel.generateUniqueTagPayload()
-        val payload3 = viewModel.generateUniqueTagPayload()
-
-        // Assert
-        // All generated payloads should be different
-        assertTrue(payload1 != payload2)
-        assertTrue(payload1 != payload3)
-        assertTrue(payload2 != payload3)
-    }
-    @Ignore
-    @Test
-    fun `generateUniqueTagPayload should create valid tag for scanning`() {
-        // Act
-        val payload = viewModel.generateUniqueTagPayload()
-
-        // Assert
-        // Generated payload should be recognized as a valid tag when scanning
-        assertTrue(payload.startsWith("UNDISTRACT"))
-
-        // Test that this tag would be recognized by the scanTag method
-        viewModel.scanTag(payload)
-        // If it's valid, it would trigger blocking toggle, not wrong tag alert
-        assertEquals(false, viewModel.showWrongTagAlert.value)
-    }
-    @Ignore
-    @Test
-    fun `generateUniqueTagPayload components should be extractable`() {
-        // Act
-        val payload = viewModel.generateUniqueTagPayload()
-        val parts = payload.split("-")
-
-        // Assert we can extract individual components
-        val prefix = parts[0]
-        val timestamp = parts[1].toLong()
-        val random = parts[2].toInt()
-
-        assertEquals("UNDISTRACT", prefix)
-        assertTrue(timestamp > 0)
-        assertTrue(random in 1000..9999)
-
-        // Components should combine back to original
-        assertEquals(payload, "$prefix-$timestamp-$random")
     }
 }

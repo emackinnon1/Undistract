@@ -275,7 +275,7 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
      *
      * @return A unique string payload for a new NFC tag
      */
-    fun generateUniqueTagPayload(): String {
+    fun generateUniqueTagId(): String {
         val timestamp = System.currentTimeMillis()
         val random = (1000 + kotlin.random.Random.nextInt(9000))  // 4-digit number
         return "$VALID_TAG_PREFIX-$timestamp-$random"

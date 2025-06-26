@@ -250,7 +250,7 @@ fun BlockerScreen(
             onConfirm = {
                 viewModel.onCreateTagConfirmed()
                 viewModel.setWritingTag(true)
-                val uniquePayload = viewModel.generateUniqueTagPayload()
+                val uniquePayload = viewModel.generateUniqueTagId()
                 nfcHelper.startWrite(uniquePayload) { success ->
                     viewModel.setWritingTag(false)
                     if (success) {
