@@ -151,10 +151,11 @@ fun BlockerScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(if (isBlocking)
-                    MaterialTheme.colorScheme.errorContainer
-                else
-                    MaterialTheme.colorScheme.secondaryContainer
+                .background(
+                    if (isBlocking)
+                        MaterialTheme.colorScheme.errorContainer
+                    else
+                        MaterialTheme.colorScheme.secondaryContainer
                 )
         ) {
             Column(
@@ -250,11 +251,11 @@ fun BlockerScreen(
             onConfirm = {
                 viewModel.onCreateTagConfirmed()
                 viewModel.setWritingTag(true)
-                val uniquePayload = viewModel.generateUniqueTagId()
-                nfcHelper.startWrite(uniquePayload) { success ->
+                val uniqueId = viewModel.generateUniqueTagId()
+                nfcHelper.startWrite(uniqueId) { success ->
                     viewModel.setWritingTag(false)
                     if (success) {
-                        viewModel.saveTag(uniquePayload)
+                        viewModel.saveTag(uniqueId)
                     }
                     viewModel.onTagWriteResult(success)
                     viewModel.setWritingTag(false)
@@ -341,7 +342,14 @@ fun TagsList(
                                         onLongClick = { tagToDelete = tag }
                                     )
                             ) {
-                                Text(tag.payload)
+                                Text(
+                                    "ID: ${tag.id}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Text(
+                                    "Payload: ${tag.payload}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
                                 Text(
                                     "Created: ${formatDate(tag.createdAt)}",
                                     style = MaterialTheme.typography.bodySmall
