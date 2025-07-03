@@ -31,6 +31,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.undistract.R
 import com.undistract.UndistractApp
+import com.undistract.data.entities.NfcTagEntity
 import com.undistract.data.models.NfcTag
 import com.undistract.nfc.NfcHelper
 import com.undistract.ui.profile.ProfilesPicker
@@ -38,6 +39,7 @@ import kotlinx.coroutines.flow.StateFlow
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.text.format
 
 /**
  * Composable function for the Blocker screen, which allows users to block or unblock apps using NFC tags.
@@ -79,7 +81,7 @@ fun BlockerScreen(
     LaunchedEffect(showScanTagAlert, isWritingTag) {
         if (showScanTagAlert || isWritingTag) {
             if (showScanTagAlert) {
-                nfcHelper.startScan { payload -> viewModel.scanTag(payload) }
+                nfcHelper.startScan { id -> viewModel.scanTag(id) }
             }
             nfcHelper.enableForegroundDispatch()
         } else {
@@ -149,10 +151,11 @@ fun BlockerScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(if (isBlocking)
-                    MaterialTheme.colorScheme.errorContainer
-                else
-                    MaterialTheme.colorScheme.secondaryContainer
+                .background(
+                    if (isBlocking)
+                        MaterialTheme.colorScheme.errorContainer
+                    else
+                        MaterialTheme.colorScheme.secondaryContainer
                 )
         ) {
             Column(
@@ -248,11 +251,11 @@ fun BlockerScreen(
             onConfirm = {
                 viewModel.onCreateTagConfirmed()
                 viewModel.setWritingTag(true)
-                val uniquePayload = viewModel.generateUniqueTagPayload()
-                nfcHelper.startWrite(uniquePayload) { success ->
+                val uniqueId = viewModel.generateUniqueTagId()
+                nfcHelper.startWrite(uniqueId) { success ->
                     viewModel.setWritingTag(false)
                     if (success) {
-                        viewModel.saveTag(uniquePayload)
+                        viewModel.saveTag(uniqueId)
                     }
                     viewModel.onTagWriteResult(success)
                     viewModel.setWritingTag(false)
@@ -302,11 +305,11 @@ fun BlockerScreen(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TagsList(
-        tags: List<NfcTag>,
+        tags: List<NfcTagEntity>,
         onClose: () -> Unit,
         viewModel: BlockerViewModel
 ) {
-    var tagToDelete by remember { mutableStateOf<NfcTag?>(null) }
+    var tagToDelete by remember { mutableStateOf<NfcTagEntity?>(null) }
 
     Dialog(onDismissRequest = onClose) {
         Surface(
@@ -339,7 +342,14 @@ fun TagsList(
                                         onLongClick = { tagToDelete = tag }
                                     )
                             ) {
-                                Text(tag.payload)
+                                Text(
+                                    "ID: ${tag.id}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Text(
+                                    "Payload: ${tag.payload}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
                                 Text(
                                     "Created: ${formatDate(tag.createdAt)}",
                                     style = MaterialTheme.typography.bodySmall
@@ -607,13 +617,13 @@ fun AlertDialogWithConfirmation(
     )
 }
 
-/** Formats a timestamp into a human-readable date string.
+/** Formats a Date into a human-readable date string.
  * Uses SimpleDateFormat to format the date in "MMM dd, yyyy HH:mm" format.
  *
- * @param timestamp The timestamp in milliseconds to format.
+ * @param date The Date to format.
  * @return A formatted date string.
  */
-private fun formatDate(timestamp: Long): String {
+private fun formatDate(date: Date): String {
     val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
-    return sdf.format(Date(timestamp))
+    return sdf.format(date)
 }

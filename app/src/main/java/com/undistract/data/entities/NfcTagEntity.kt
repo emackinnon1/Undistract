@@ -1,5 +1,7 @@
 package com.undistract.data.entities
 
+import java.util.Date
+
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -7,5 +9,5 @@ import androidx.room.PrimaryKey
 data class NfcTagEntity(
     @PrimaryKey val id: String,
     val payload: String,
-    val createdAt: Long
+    val createdAt: Date = Date()
 )

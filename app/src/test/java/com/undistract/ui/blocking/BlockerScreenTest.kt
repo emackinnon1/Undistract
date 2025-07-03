@@ -1,5 +1,6 @@
 package com.undistract.ui.blocking
 
+import com.undistract.data.entities.NfcTagEntity
 import android.content.Intent
 import org.junit.Before
 import org.junit.Test
@@ -11,7 +12,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotNull
-import com.undistract.data.models.NfcTag
+//import com.undistract.data.models.NfcTag
 
 
 class BlockerScreenTest {
@@ -119,9 +120,9 @@ class BlockerScreenTest {
     @Test
     fun tagCreation_updatesWrittenTags() {
         // Setup
-        val writtenTagsFlow = MutableStateFlow(emptyList<NfcTag>())
+        val writtenTagsFlow = MutableStateFlow(emptyList<NfcTagEntity>())
         every { viewModel.writtenTags } returns writtenTagsFlow
-        val mockTag = mockk<NfcTag>()
+        val mockTag = mockk<NfcTagEntity>()
 
         // Mock the saveTag behavior
         every { viewModel.saveTag(any()) } answers {
@@ -142,7 +143,7 @@ class BlockerScreenTest {
     @Test
     fun deleteTag_removesTagFromWrittenTags() {
         // Setup - create a list with one mock tag
-        val mockTag = mockk<NfcTag>()
+        val mockTag = mockk<NfcTagEntity>()
         val writtenTagsFlow = MutableStateFlow(listOf(mockTag))
         every { viewModel.writtenTags } returns writtenTagsFlow
 
@@ -165,8 +166,8 @@ class BlockerScreenTest {
     @Test
     fun showTagsList_displaysCorrectNumberOfTags() {
         // Setup - create a list with multiple tags
-        val mockTag1 = mockk<NfcTag>()
-        val mockTag2 = mockk<NfcTag>()
+        val mockTag1 = mockk<NfcTagEntity>()
+        val mockTag2 = mockk<NfcTagEntity>()
         val writtenTagsFlow = MutableStateFlow(listOf(mockTag1, mockTag2))
         every { viewModel.writtenTags } returns writtenTagsFlow
 
