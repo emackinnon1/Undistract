@@ -2,26 +2,43 @@ package com.undistract.managers
 
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.asLiveData
+import com.undistract.data.entities.ProfileEntity
+import com.undistract.data.mappers.toEntity
+import com.undistract.data.mappers.toProfile
 import com.undistract.data.models.AppInfo
 import com.undistract.data.models.Profile
+import com.undistract.data.repositories.ProfileRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
-
 
 /**
  * Manager class responsible for handling user profiles in the Undistract application.
  *
  * Provides functionality to create, read, update, and delete profiles, as well as
- * manage the current active profile. Profiles are persisted using SharedPreferences
+ * manage the current active profile. Profiles are persisted using Room database
  * and can be observed through StateFlow objects.
  *
  * @property context The application context used for SharedPreferences access
+ * @property profileRepository Repository used to access profiles in the Room database
  */
-class ProfileManager(private val context: Context) {
+class ProfileManager(
+    private val context: Context,
+    private val profileRepository: ProfileRepository
+) {
+    // Coroutine scope for performing database operations
+    private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     /**
-     * SharedPreferences instance used to persist profile data.
+     * SharedPreferences instance used to persist current profile ID.
      */
     private val sharedPreferences = context.getSharedPreferences("profile_manager_prefs", Context.MODE_PRIVATE)
 
@@ -65,102 +82,59 @@ class ProfileManager(private val context: Context) {
      */
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+
     /**
      * Initializes the ProfileManager by loading saved profiles.
      */
     init {
-        loadProfiles()
-    }
+        // Load the current profile ID from SharedPreferences
+        _currentProfileId.value = sharedPreferences.getString("currentProfileId", null)
 
-    /**
-     * Loads profiles from SharedPreferences.
-     *
-     * Creates a default profile if no saved profiles exist.
-     * Sets the current profile ID to either the previously selected profile
-     * or the default profile if the previous selection is no longer valid.
-     */
-    private fun loadProfiles() {
-        try {
-            val savedProfilesJson = sharedPreferences.getString("savedProfiles", null)
+        // Observe profiles from the repository
+        managerScope.launch {
+            profileRepository.getAllProfiles().collectLatest { profileEntities ->
+                val profileList = profileEntities.map { it.toProfile() }
+                _profiles.value = profileList
 
-            val profilesList = if (savedProfilesJson != null) {
-                val jsonArray = JSONArray(savedProfilesJson)
-                List(jsonArray.length()) { i ->
-                    Profile.fromJson(jsonArray.getJSONObject(i))
+                // Ensure we have a valid current profile
+                if (_currentProfileId.value == null || !profileExists(_currentProfileId.value!!)) {
+                    _currentProfileId.value = profileList.firstOrNull { it.name == "Default" }?.id
+                        ?: profileList.firstOrNull()?.id
+
+                    // Save the current profile ID
+                    sharedPreferences.edit()
+                        .putString("currentProfileId", _currentProfileId.value)
+                        .apply()
                 }
-            } else {
-                listOf(createDefaultProfile())
+
+                updateCurrentProfile()
+
+                // Create default profile if no profiles exist
+                if (profileList.isEmpty()) {
+                    createAndAddDefaultProfile()
+                }
             }
-
-            _profiles.value = profilesList
-            _currentProfileId.value = sharedPreferences.getString("currentProfileId", null)
-
-            // Ensure we have a valid current profile
-            if (_currentProfileId.value == null || !profileExists(_currentProfileId.value!!)) {
-                _currentProfileId.value = profilesList.firstOrNull { it.name == "Default" }?.id
-                    ?: profilesList.firstOrNull()?.id
-            }
-
-            updateCurrentProfile()
-        } catch (e: Exception) {
-            Log.e("ProfileManager", "Error loading profiles", e)
-            resetToDefaultProfile()
         }
     }
 
     /**
      * Creates a new default profile with empty app list.
-     *
-     * @return A new Profile object with name "Default"
      */
-    private fun createDefaultProfile(): Profile {
-        return Profile(
+    private suspend fun createAndAddDefaultProfile() {
+        val defaultProfile = Profile(
             name = "Default",
             appPackageNames = emptyList(),
             icon = "baseline_block_24"
         )
-    }
 
-    /**
-     * Resets to a default profile when an error occurs.
-     *
-     * Creates a new default profile, sets it as the only available profile,
-     * and makes it the current profile.
-     */
-    private fun resetToDefaultProfile() {
-        val defaultProfile = createDefaultProfile()
-        _profiles.value = listOf(defaultProfile)
-        _currentProfileId.value = defaultProfile.id
-        saveProfiles()
-    }
-
-    /**
-     * Saves all profiles and the current profile ID to SharedPreferences.
-     *
-     * Converts profiles to JSON format before saving and updates the current profile.
-     */
-    private fun saveProfiles() {
-        try {
-            val jsonArray = JSONArray().apply {
-                _profiles.value.forEach { put(it.toJson()) }
-            }
-
-            sharedPreferences.edit()
-                .putString("savedProfiles", jsonArray.toString())
-                .putString("currentProfileId", _currentProfileId.value)
-                .apply()
-
-            updateCurrentProfile()
-        } catch (e: Exception) {
-            Log.e("ProfileManager", "Error saving profiles", e)
-        }
+        addProfile(defaultProfile)
     }
 
     /**
      * Updates the current profile object based on the current profile ID.
-     *
-     * Falls back to the default profile or the first available profile if
-     * the current profile ID doesn't match any existing profile.
      */
     private fun updateCurrentProfile() {
         _currentProfile.value = _profiles.value.find { it.id == _currentProfileId.value }
@@ -182,9 +156,23 @@ class ProfileManager(private val context: Context) {
      * @param newProfile The profile to add
      */
     fun addProfile(newProfile: Profile) {
-        _profiles.value = _profiles.value + newProfile
-        _currentProfileId.value = newProfile.id
-        saveProfiles()
+        _isLoading.value = true
+        managerScope.launch {
+            try {
+                profileRepository.saveProfile(newProfile.toEntity())
+                _currentProfileId.value = newProfile.id
+
+                // Save the current profile ID in SharedPreferences
+                sharedPreferences.edit()
+                    .putString("currentProfileId", newProfile.id)
+                    .apply()
+            } catch (e: Exception) {
+                Log.e("ProfileManager", "Error adding profile", e)
+                _errorMessage.value = "Failed to add profile: ${e.localizedMessage}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 
     /**
@@ -201,16 +189,16 @@ class ProfileManager(private val context: Context) {
         appPackageNames: List<String>? = null,
         icon: String? = null
     ) {
-        val index = _profiles.value.indexOfFirst { it.id == id }
-        if (index != -1) {
-            val updatedProfiles = _profiles.value.toMutableList()
-            updatedProfiles[index] = updatedProfiles[index].copy(
-                name = name ?: updatedProfiles[index].name,
-                appPackageNames = appPackageNames ?: updatedProfiles[index].appPackageNames,
-                icon = icon ?: updatedProfiles[index].icon
-            )
-            _profiles.value = updatedProfiles
-            saveProfiles()
+        val existingProfile = _profiles.value.find { it.id == id } ?: return
+
+        val updatedProfile = existingProfile.copy(
+            name = name ?: existingProfile.name,
+            appPackageNames = appPackageNames ?: existingProfile.appPackageNames,
+            icon = icon ?: existingProfile.icon
+        )
+
+        managerScope.launch {
+            profileRepository.saveProfile(updatedProfile.toEntity())
         }
     }
 
@@ -222,7 +210,12 @@ class ProfileManager(private val context: Context) {
     fun setCurrentProfile(id: String) {
         if (profileExists(id)) {
             _currentProfileId.value = id
-            saveProfiles()
+            updateCurrentProfile()
+
+            // Save the current profile ID in SharedPreferences
+            sharedPreferences.edit()
+                .putString("currentProfileId", id)
+                .apply()
         }
     }
 
@@ -235,37 +228,30 @@ class ProfileManager(private val context: Context) {
      * @param id The ID of the profile to delete
      */
     fun deleteProfile(id: String) {
-        val updatedProfiles = _profiles.value.filter { it.id != id }
-
-        if (updatedProfiles.isEmpty()) {
+        // Check if this would leave us with no profiles
+        if (_profiles.value.size <= 1) {
             _errorMessage.value = "You must have at least one profile"
             return
         }
 
-        _profiles.value = updatedProfiles
+        val profileToDelete = _profiles.value.find { it.id == id } ?: return
 
-        if (_currentProfileId.value == id) {
-            _currentProfileId.value = updatedProfiles.firstOrNull()?.id
+        managerScope.launch {
+            // Delete from database
+            profileRepository.deleteProfile(profileToDelete.toEntity())
+
+            // If the deleted profile was current, select another profile
+            if (_currentProfileId.value == id) {
+                val newCurrentId = _profiles.value.firstOrNull { it.id != id }?.id
+
+                _currentProfileId.value = newCurrentId
+
+                // Save the current profile ID in SharedPreferences
+                sharedPreferences.edit()
+                    .putString("currentProfileId", newCurrentId)
+                    .apply()
+            }
         }
-
-        saveProfiles()
-    }
-
-    /**
-     * Deletes all non-default profiles.
-     *
-     * Keeps only profiles where isDefault is true, and updates
-     * the current profile if necessary.
-     */
-    fun deleteAllNonDefaultProfiles() {
-        val defaultProfiles = _profiles.value.filter { it.isDefault }
-        _profiles.value = defaultProfiles
-
-        if (!defaultProfiles.any { it.id == _currentProfileId.value }) {
-            _currentProfileId.value = defaultProfiles.firstOrNull()?.id
-        }
-
-        saveProfiles()
     }
 
     /**
@@ -277,14 +263,6 @@ class ProfileManager(private val context: Context) {
     fun getFilteredAppList(appList: List<AppInfo>): List<AppInfo> {
         return appList.filter { it.packageName != "com.undistract" }
     }
-
-    /**
-     * Retrieves a profile by its ID.
-     *
-     * @param id The ID of the profile to retrieve
-     * @return The profile with the specified ID, or null if not found
-     */
-    fun getProfileById(id: String): Profile? = _profiles.value.find { it.id == id }
 
     /**
      * Clears the current error message.

@@ -29,14 +29,16 @@ class UndistractApp : Application() {
         super.onCreate()
         instance = this
         appBlockerManager = AppBlockerManager(this)
-        this@UndistractApp.profileManager = ProfileManager(this)
         database = UndistractDatabase.getDatabase(this)
 
-        // Add this code for profile migration
+        // Create repository first
         val profileRepository = ProfileRepositoryImpl(database.profileDao())
-        val migrationUtil = ProfileMigrationUtil(this, profileRepository)
+
+        // Initialize ProfileManager with repository
+        this@UndistractApp.profileManager = ProfileManager(this, profileRepository)
 
         // Run migration in a background scope
+        val migrationUtil = ProfileMigrationUtil(this, profileRepository)
         applicationScope.launch {
             if (migrationUtil.isMigrationNeeded()) {
                 val migratedCount = migrationUtil.migrateProfiles()
