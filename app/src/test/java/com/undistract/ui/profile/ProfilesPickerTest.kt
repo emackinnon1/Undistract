@@ -38,6 +38,7 @@ import androidx.compose.material3.Button
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assert
+import com.undistract.data.entities.ProfileEntity
 
 
 @ExperimentalCoroutinesApi
@@ -50,9 +51,9 @@ class ProfilesPickerTest {
     @Test
     fun profileListDisplay_showsAllProfilesFromManager() {
         val testProfiles = listOf(
-            Profile(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
-            Profile(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24"),
-            Profile(id = "3", name = "Focus", appPackageNames = listOf(), icon = "baseline_block_24")
+            ProfileEntity(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
+            ProfileEntity(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24"),
+            ProfileEntity(id = "3", name = "Focus", appPackageNames = listOf(), icon = "baseline_block_24")
         )
 
         // Create a mock ProfileManager instead of trying to extend it
@@ -75,9 +76,9 @@ class ProfilesPickerTest {
     @Test
     fun profileSelection_updatesCurrentProfileInManager() {
         val testProfiles = listOf(
-            Profile(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
-            Profile(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24"),
-            Profile(id = "3", name = "Focus", appPackageNames = listOf(), icon = "baseline_block_24")
+            ProfileEntity(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
+            ProfileEntity(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24"),
+            ProfileEntity(id = "3", name = "Focus", appPackageNames = listOf(), icon = "baseline_block_24")
         )
 
         // Create a mock ProfileManager
@@ -105,8 +106,8 @@ class ProfilesPickerTest {
     @Test
     fun profileCreation_clickingNewOpensDialogAndSavingAddsProfile() {
         val testProfiles = listOf(
-            Profile(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
-            Profile(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24")
+            ProfileEntity(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
+            ProfileEntity(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24")
         )
 
         val fakeManager = mockk<ProfileManager>(relaxed = true)
@@ -114,7 +115,7 @@ class ProfilesPickerTest {
         every { fakeManager.currentProfileId } returns MutableStateFlow(testProfiles.first().id)
 
         // Capture any profile being added to verify its properties later
-        val profileSlot = slot<Profile>()
+        val profileSlot = slot<ProfileEntity>()
         every { fakeManager.addProfile(capture(profileSlot)) } returns Unit
 
         composeTestRule.setContent {
@@ -162,9 +163,9 @@ class ProfilesPickerTest {
     fun profileEditing_longPressOpensDialogAndSavingUpdatesProfile() {
         // Create test profiles
         val testProfiles = listOf(
-            Profile(id = "1", name = "Work Time", appPackageNames = listOf("com.slack"),
+            ProfileEntity(id = "1", name = "Work Time", appPackageNames = listOf("com.slack"),
                    icon = "baseline_work_24"),
-            Profile(id = "2", name = "Personal", appPackageNames = listOf(),
+            ProfileEntity(id = "2", name = "Personal", appPackageNames = listOf(),
                    icon = "baseline_person_24")
         )
 
@@ -190,7 +191,7 @@ class ProfilesPickerTest {
                 val currentProfileId by fakeManager.currentProfileId.collectAsState()
 
                 var showAddProfileView by remember { mutableStateOf(false) }
-                var editingProfile by remember { mutableStateOf<Profile?>(testProfiles[0]) }
+                var editingProfile by remember { mutableStateOf<ProfileEntity?>(testProfiles[0]) }
 
                 // Show the edit dialog right away for testing
                 editingProfile?.let { profile ->
@@ -246,9 +247,9 @@ class ProfilesPickerTest {
     fun profileDeletion_clickingDeleteRemovesProfileFromList() {
         // Create test profiles with one non-default profile that can be deleted
         val testProfiles = listOf(
-            Profile(id = "1", name = "Default", appPackageNames = listOf(),
+            ProfileEntity(id = "1", name = "Default", appPackageNames = listOf(),
                    icon = "baseline_home_24"),
-            Profile(id = "2", name = "Work", appPackageNames = listOf("com.slack"),
+            ProfileEntity(id = "2", name = "Work", appPackageNames = listOf("com.slack"),
                    icon = "baseline_work_24")
         )
 
@@ -268,7 +269,7 @@ class ProfilesPickerTest {
 
                 var showAddProfileView by remember { mutableStateOf(false) }
                 // Start with the non-default profile in edit mode
-                var editingProfile by remember { mutableStateOf<Profile?>(testProfiles[1]) }
+                var editingProfile by remember { mutableStateOf<ProfileEntity?>(testProfiles[1]) }
 
                 // Show the edit dialog right away for testing
                 editingProfile?.let { profile ->
@@ -308,8 +309,8 @@ class ProfilesPickerTest {
     fun addProfileDialog_clickingNewShowsDialogAndDismissingHidesIt() {
         // Create test profiles
         val testProfiles = listOf(
-            Profile(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
-            Profile(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24")
+            ProfileEntity(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
+            ProfileEntity(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24")
         )
 
         val fakeManager = mockk<ProfileManager>(relaxed = true)
@@ -356,8 +357,8 @@ class ProfilesPickerTest {
     fun editProfileDialog_longPressingShowsDialogAndDismissingHidesIt() {
         // Create test profiles
         val testProfiles = listOf(
-            Profile(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
-            Profile(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24")
+            ProfileEntity(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
+            ProfileEntity(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24")
         )
 
         val fakeManager = mockk<ProfileManager>(relaxed = true)
@@ -367,7 +368,7 @@ class ProfilesPickerTest {
         composeTestRule.setContent {
             Column {
                 // Create a simplified version with direct state control
-                var editingProfile by remember { mutableStateOf<Profile?>(null) }
+                var editingProfile by remember { mutableStateOf<ProfileEntity?>(null) }
 
                 // Use a simple button to simulate long press for testing
                 Button(
@@ -422,8 +423,8 @@ class ProfilesPickerTest {
     fun instructionText_displaysLongPressInstructions() {
         // Create test profiles
         val testProfiles = listOf(
-            Profile(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
-            Profile(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24")
+            ProfileEntity(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
+            ProfileEntity(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24")
         )
 
         val fakeManager = mockk<ProfileManager>(relaxed = true)
@@ -442,8 +443,8 @@ class ProfilesPickerTest {
     fun profileCellSelectionState_selectedProfileShowsVisualIndication() {
         // Create test profiles
         val testProfiles = listOf(
-            Profile(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
-            Profile(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24")
+            ProfileEntity(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
+            ProfileEntity(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24")
         )
 
         val fakeManager = mockk<ProfileManager>(relaxed = true)

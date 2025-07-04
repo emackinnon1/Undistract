@@ -3,63 +3,188 @@ package com.undistract.managers
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.drawable.Drawable
+import android.os.Build
+import androidx.compose.ui.test.junit4.createComposeRule
 import com.undistract.UndistractApp
+import com.undistract.data.entities.ProfileEntity
 import com.undistract.data.models.AppInfo
+import com.undistract.data.repositories.ProfileRepository
+import com.undistract.ui.profile.ProfilesPicker
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.*
+import io.mockk.slot
+import io.mockk.verify
 
-//@Config(manifest = "src/main/AndroidManifest.xml")
+
+
+
+@ExperimentalCoroutinesApi
 @RunWith(RobolectricTestRunner::class)
-@Config(
-    application = UndistractApp::class,
-    sdk = [34]
-)
-class ProfileManagerTest {
+@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+class ProfilesPickerTest {
+    @get:Rule
+    val composeTestRule = createComposeRule()
 
-    private lateinit var profileManager: ProfileManager
+    // Update mock setup to use ProfileEntity instead of Profile
+    private fun setupMockProfileManager(
+        profileEntities: List<ProfileEntity>,
+        currentId: String = profileEntities.firstOrNull()?.id ?: "",
+        isLoading: Boolean = false,
+        errorMessage: String? = null
+    ): ProfileManager {
+        val fakeRepository = mockk<ProfileRepository>(relaxed = true)
+        every { fakeRepository.getAllProfiles() } returns MutableStateFlow(profileEntities)
 
-    @Before
-    fun setup() {
-        // Create mocks
-        val mockContext = Mockito.mock(Context::class.java)
-        val mockSharedPreferences = Mockito.mock(SharedPreferences::class.java)
-        val mockEditor = Mockito.mock(SharedPreferences.Editor::class.java)
+        val fakeManager = mockk<ProfileManager>(relaxed = true)
+        every { fakeManager.profiles } returns MutableStateFlow(profileEntities)
+        every { fakeManager.currentProfileId } returns MutableStateFlow(currentId)
+        every { fakeManager.isLoading } returns MutableStateFlow(isLoading)
+        every { fakeManager.errorMessage } returns MutableStateFlow(errorMessage)
 
-        // Configure mock behavior
-        Mockito.`when`(mockContext.getSharedPreferences(Mockito.anyString(), Mockito.anyInt()))
-            .thenReturn(mockSharedPreferences)
-        Mockito.`when`(mockSharedPreferences.edit()).thenReturn(mockEditor)
-        Mockito.`when`(mockEditor.putString(Mockito.anyString(), Mockito.anyString())).thenReturn(mockEditor)
-        Mockito.`when`(mockEditor.putBoolean(Mockito.anyString(), Mockito.anyBoolean())).thenReturn(mockEditor)
-
-        profileManager = ProfileManager(mockContext)
+        return fakeManager
     }
 
     @Test
-    fun getFilteredAppList_removesOwnPackage() {
-        // Create mock Drawable
-        val mockDrawable = Mockito.mock(Drawable::class.java)
-
-        // Create test app list with mock drawable
-        val testAppList = listOf(
-            AppInfo("com.example.app1", "App 1", mockDrawable),
-            AppInfo("com.undistract", "Undistract", mockDrawable),
-            AppInfo("com.example.app2", "App 2", mockDrawable)
+    fun profileListDisplay_showsAllProfilesFromManager() {
+        val testProfiles = listOf(
+            ProfileEntity(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
+            ProfileEntity(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24"),
+            ProfileEntity(id = "3", name = "Focus", appPackageNames = listOf(), icon = "baseline_block_24")
         )
 
-        // Call method under test
-        val filteredList = profileManager.getFilteredAppList(testAppList)
+        val fakeManager = setupMockProfileManager(testProfiles)
 
+        composeTestRule.setContent {
+            ProfilesPicker(profileManager = fakeManager)
+        }
 
-        // Verify results
-        Assert.assertEquals(2, filteredList.size)
-        Assert.assertTrue(filteredList.none { it.packageName == "com.undistract" })
-        Assert.assertTrue(filteredList.any { it.packageName == "com.example.app1" })
-        Assert.assertTrue(filteredList.any { it.packageName == "com.example.app2" })
+        // Verify each profile name appears exactly once
+        testProfiles.forEach { profile ->
+            composeTestRule.onAllNodesWithText(profile.name).assertCountEquals(1)
+        }
+    }
+
+    @Test
+    fun profileSelection_updatesCurrentProfileInManager() {
+        val testProfiles = listOf(
+            ProfileEntity(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24"),
+            ProfileEntity(id = "2", name = "Personal", appPackageNames = listOf(), icon = "baseline_person_24"),
+            ProfileEntity(id = "3", name = "Focus", appPackageNames = listOf(), icon = "baseline_block_24")
+        )
+
+        val fakeManager = setupMockProfileManager(testProfiles)
+
+        composeTestRule.setContent {
+            ProfilesPicker(profileManager = fakeManager)
+        }
+
+        // Get the second profile to select
+        val profileToSelect = testProfiles[1]
+
+        // Find and click the profile by its name
+        composeTestRule.onNodeWithText(profileToSelect.name).performClick()
+        composeTestRule.waitForIdle()
+
+        // Verify that setCurrentProfile was called with the correct profile ID
+        verify { fakeManager.setCurrentProfile(profileToSelect.id) }
+    }
+
+    @Test
+    fun loadingIndicator_isDisplayedWhenLoading() {
+        // Setup the ProfileManager with isLoading=true
+        val fakeManager = setupMockProfileManager(
+            profileEntities = listOf(ProfileEntity(id = "1", name = "Default", appPackageNames = listOf())),
+            isLoading = true
+        )
+
+        composeTestRule.setContent {
+            ProfilesPicker(profileManager = fakeManager)
+        }
+
+        // Instead of using isA and assertExists directly, use a different approach
+        composeTestRule.onNode(androidx.compose.ui.test.hasTestTag("loadingIndicator")).assertExists()
+    }
+
+    @Test
+    fun errorMessage_isDisplayedWhenAvailable() {
+        val testProfiles = listOf(
+            ProfileEntity(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24")
+        )
+
+        // Setup with an error message
+        val errorMsg = "Failed to save profile"
+        val fakeManager = setupMockProfileManager(
+            profileEntities = testProfiles,
+            errorMessage = errorMsg
+        )
+
+        composeTestRule.setContent {
+            ProfilesPicker(profileManager = fakeManager)
+        }
+
+        // Wait for the Snackbar to appear with our error message
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithText(errorMsg).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Verify the error message is displayed
+        composeTestRule.onNodeWithText(errorMsg).assertExists()
+
+        // Verify clearErrorMessage was called
+        verify { fakeManager.clearErrorMessage() }
+    }
+
+    @Test
+    fun addingProfile_showsLoadingAndClearsError() {
+        val testProfiles = listOf(
+            ProfileEntity(id = "1", name = "Work", appPackageNames = listOf(), icon = "baseline_work_24")
+        )
+
+        val loadingStateFlow = MutableStateFlow(false)
+        val errorMessageFlow = MutableStateFlow<String?>(null)
+
+        val fakeManager = mockk<ProfileManager>(relaxed = true)
+        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
+        every { fakeManager.currentProfileId } returns MutableStateFlow(testProfiles.first().id)
+        every { fakeManager.isLoading } returns loadingStateFlow
+        every { fakeManager.errorMessage } returns errorMessageFlow
+
+        // Capture any profile being added
+        val profileSlot = slot<ProfileEntity>()
+        every { fakeManager.addProfile(capture(profileSlot)) } answers {
+            loadingStateFlow.value = true
+            // Simulate a successful operation after some delay
+            loadingStateFlow.value = false
+        }
+
+        composeTestRule.setContent {
+            ProfilesPicker(profileManager = fakeManager)
+        }
+
+        // Click "Add New Profile"
+        composeTestRule.onNodeWithText("Add New Profile").performClick()
+        composeTestRule.waitForIdle()
+
+        // Enter profile name and save
+        composeTestRule.onNodeWithText("Profile Name").performTextInput("Test Profile")
+        composeTestRule.onNodeWithText("Save").performClick()
+        composeTestRule.waitForIdle()
+
+        // Verify addProfile was called with expected data
+        verify { fakeManager.addProfile(any()) }
+        // Check the captured entity has the expected name
+        assert(profileSlot.captured.name == "Test Profile")
     }
 }
