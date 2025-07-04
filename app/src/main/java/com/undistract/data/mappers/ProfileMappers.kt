@@ -1,7 +1,5 @@
 package com.undistract.data.mappers
 
-package com.undistract.data.mappers
-
 import com.undistract.data.entities.ProfileEntity
 import com.undistract.data.models.Profile
 
