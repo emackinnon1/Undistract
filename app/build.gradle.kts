@@ -79,13 +79,17 @@ dependencies {
     testImplementation(libs.androidx.junit)
     testImplementation(libs.androidx.room.testing)
     testImplementation(libs.androidx.ui.test.junit4)
+    testImplementation(libs.androidx.ui.test)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.material3)
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.mockk)
     testImplementation(libs.mockk.android)
     testImplementation(libs.robolectric)
+    testImplementation(libs.ui.test.junit4)
+
 
     // Android test implementation dependencies
     androidTestImplementation(libs.androidx.core)
@@ -100,4 +104,5 @@ dependencies {
     // Debug implementation dependencies
     debugImplementation(libs.androidx.ui.test.manifest)
     debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.ui.test.manifest)
 }

@@ -1,7 +1,6 @@
 package com.undistract.ui.profile
 
 import android.os.Build
-import com.undistract.data.models.Profile
 import com.undistract.managers.ProfileManager
 import io.mockk.verify
 import io.mockk.every
@@ -58,10 +57,10 @@ class ProfilesPickerTest {
 
         // Create a mock ProfileManager instead of trying to extend it
         val fakeManager = mockk<ProfileManager>(relaxed = true)
-
-        // Configure the mock to return our test data
-        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
-        every { fakeManager.currentProfileId } returns MutableStateFlow(testProfiles.first().id)
+        every { fakeManager.profiles } returns MutableStateFlow<List<ProfileEntity>>(testProfiles)
+        every { fakeManager.currentProfileId } returns MutableStateFlow<String?>(testProfiles.first().id)
+        every { fakeManager.isLoading } returns MutableStateFlow(false)
+        every { fakeManager.errorMessage } returns MutableStateFlow<String?>(null)
 
         composeTestRule.setContent {
             ProfilesPicker(profileManager = fakeManager)
@@ -83,10 +82,10 @@ class ProfilesPickerTest {
 
         // Create a mock ProfileManager
         val fakeManager = mockk<ProfileManager>(relaxed = true)
-
-        // Configure the mock to return our test data
-        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
-        every { fakeManager.currentProfileId } returns MutableStateFlow(testProfiles.first().id)
+        every { fakeManager.profiles } returns MutableStateFlow<List<ProfileEntity>>(testProfiles)
+        every { fakeManager.currentProfileId } returns MutableStateFlow<String?>(testProfiles.first().id)
+        every { fakeManager.isLoading } returns MutableStateFlow(false)
+        every { fakeManager.errorMessage } returns MutableStateFlow<String?>(null)
 
         composeTestRule.setContent {
             ProfilesPicker(profileManager = fakeManager)
@@ -111,8 +110,11 @@ class ProfilesPickerTest {
         )
 
         val fakeManager = mockk<ProfileManager>(relaxed = true)
-        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
-        every { fakeManager.currentProfileId } returns MutableStateFlow(testProfiles.first().id)
+        every { fakeManager.profiles } returns MutableStateFlow<List<ProfileEntity>>(testProfiles)
+        every { fakeManager.currentProfileId } returns MutableStateFlow<String?>(testProfiles.first().id)
+        every { fakeManager.isLoading } returns MutableStateFlow(false)
+        every { fakeManager.errorMessage } returns MutableStateFlow<String?>(null)
+
 
         // Capture any profile being added to verify its properties later
         val profileSlot = slot<ProfileEntity>()
@@ -170,8 +172,10 @@ class ProfilesPickerTest {
         )
 
         val fakeManager = mockk<ProfileManager>(relaxed = true)
-        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
-        every { fakeManager.currentProfileId } returns MutableStateFlow(testProfiles.first().id)
+        every { fakeManager.profiles } returns MutableStateFlow<List<ProfileEntity>>(testProfiles)
+        every { fakeManager.currentProfileId } returns MutableStateFlow<String?>(testProfiles.first().id)
+        every { fakeManager.isLoading } returns MutableStateFlow(false)
+        every { fakeManager.errorMessage } returns MutableStateFlow<String?>(null)
 
         // Capture profile updates to verify later
         val nameSlot = slot<String>()
@@ -254,8 +258,10 @@ class ProfilesPickerTest {
         )
 
         val fakeManager = mockk<ProfileManager>(relaxed = true)
-        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
-        every { fakeManager.currentProfileId } returns MutableStateFlow(testProfiles.first().id)
+        every { fakeManager.profiles } returns MutableStateFlow<List<ProfileEntity>>(testProfiles)
+        every { fakeManager.currentProfileId } returns MutableStateFlow<String?>(testProfiles.first().id)
+        every { fakeManager.isLoading } returns MutableStateFlow(false)
+        every { fakeManager.errorMessage } returns MutableStateFlow<String?>(null)
 
         // Capture the profileId passed to deleteProfile to verify later
         val profileIdSlot = slot<String>()
@@ -314,8 +320,10 @@ class ProfilesPickerTest {
         )
 
         val fakeManager = mockk<ProfileManager>(relaxed = true)
-        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
-        every { fakeManager.currentProfileId } returns MutableStateFlow(testProfiles.first().id)
+        every { fakeManager.profiles } returns MutableStateFlow<List<ProfileEntity>>(testProfiles)
+        every { fakeManager.currentProfileId } returns MutableStateFlow<String?>(testProfiles.first().id)
+        every { fakeManager.isLoading } returns MutableStateFlow(false)
+        every { fakeManager.errorMessage } returns MutableStateFlow<String?>(null)
 
         composeTestRule.setContent {
             ProfilesPicker(profileManager = fakeManager)
@@ -362,8 +370,10 @@ class ProfilesPickerTest {
         )
 
         val fakeManager = mockk<ProfileManager>(relaxed = true)
-        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
-        every { fakeManager.currentProfileId } returns MutableStateFlow(testProfiles.first().id)
+        every { fakeManager.profiles } returns MutableStateFlow<List<ProfileEntity>>(testProfiles)
+        every { fakeManager.currentProfileId } returns MutableStateFlow<String?>(testProfiles.first().id)
+        every { fakeManager.isLoading } returns MutableStateFlow(false)
+        every { fakeManager.errorMessage } returns MutableStateFlow<String?>(null)
 
         composeTestRule.setContent {
             Column {
@@ -428,8 +438,10 @@ class ProfilesPickerTest {
         )
 
         val fakeManager = mockk<ProfileManager>(relaxed = true)
-        every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
-        every { fakeManager.currentProfileId } returns MutableStateFlow(testProfiles.first().id)
+        every { fakeManager.profiles } returns MutableStateFlow<List<ProfileEntity>>(testProfiles)
+        every { fakeManager.currentProfileId } returns MutableStateFlow<String?>(testProfiles.first().id)
+        every { fakeManager.isLoading } returns MutableStateFlow(false)
+        every { fakeManager.errorMessage } returns MutableStateFlow<String?>(null)
 
         composeTestRule.setContent {
             ProfilesPicker(profileManager = fakeManager)
@@ -452,6 +464,10 @@ class ProfilesPickerTest {
 
         every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
         every { fakeManager.currentProfileId } returns currentProfileIdFlow
+        every { fakeManager.profiles } returns MutableStateFlow<List<ProfileEntity>>(testProfiles)
+        every { fakeManager.currentProfileId } returns MutableStateFlow<String?>(testProfiles.first().id)
+        every { fakeManager.isLoading } returns MutableStateFlow(false)
+        every { fakeManager.errorMessage } returns MutableStateFlow<String?>(null)
         every { fakeManager.setCurrentProfile(any()) } answers {
             currentProfileIdFlow.value = firstArg()
         }
