@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.undistract.R
+import com.undistract.data.entities.ProfileEntity
 import com.undistract.data.models.Profile
 import com.undistract.data.models.AppInfo
 import com.undistract.managers.ProfileManager
@@ -62,7 +64,7 @@ fun ProfilesPicker(
     val currentProfileId by profileManager.currentProfileId.collectAsState()
 
     var showAddProfileView by remember { mutableStateOf(false) }
-    var editingProfile by remember { mutableStateOf<Profile?>(null) }
+    var editingProfile by remember { mutableStateOf<ProfileEntity?>(null) }
 
     val isLoading by profileManager.isLoading.collectAsState()
     val errorMessage by profileManager.errorMessage.collectAsState()
@@ -170,7 +172,9 @@ fun ProfilesPicker(
                     .pointerInput(Unit) { /* Consume all touch events */ },
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(
+                    modifier = Modifier.testTag("loadingIndicator")
+                )
             }
         }
     }
@@ -180,7 +184,8 @@ fun ProfilesPicker(
         ProfileFormDialog(
             onDismiss = { showAddProfileView = false },
             onSave = { name, icon, apps ->
-                val newProfile = Profile(
+                val newProfile = ProfileEntity(
+                    id = java.util.UUID.randomUUID().toString(),
                     name = name,
                     appPackageNames = apps,
                     icon = icon
@@ -225,7 +230,7 @@ fun ProfilesPicker(
  */
 @Composable
 fun ProfileCell(
-    profile: Profile,
+    profile: ProfileEntity,
     isSelected: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit
@@ -359,7 +364,7 @@ fun ProfileCellBase(
  */
 @Composable
 fun ProfileFormDialog(
-    profile: Profile? = null,
+    profile: ProfileEntity? = null,
     onDismiss: () -> Unit,
     onSave: (name: String, icon: String, apps: List<String>) -> Unit,
     onDelete: ((String) -> Unit)? = null
@@ -450,7 +455,7 @@ fun ProfileFormDialog(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (isEditMode && profile.isDefault == false) {
+                    if (isEditMode) {
                         TextButton(
                             onClick = {
                                 profile.let {

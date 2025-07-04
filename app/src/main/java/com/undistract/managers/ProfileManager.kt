@@ -45,12 +45,12 @@ class ProfileManager(
     /**
      * Mutable state that holds the list of available profiles.
      */
-    private val _profiles = MutableStateFlow<List<Profile>>(emptyList())
+    private val _profiles = MutableStateFlow<List<ProfileEntity>>(emptyList())
 
     /**
      * Read-only state flow exposing the list of available profiles.
      */
-    val profiles: StateFlow<List<Profile>> = _profiles.asStateFlow()
+    val profiles: StateFlow<List<ProfileEntity>> = _profiles.asStateFlow()
 
     /**
      * Mutable state that holds the ID of the currently selected profile.
@@ -65,12 +65,12 @@ class ProfileManager(
     /**
      * Mutable state that holds the currently selected profile object.
      */
-    private val _currentProfile = MutableStateFlow<Profile?>(null)
+    private val _currentProfile = MutableStateFlow<ProfileEntity?>(null)
 
     /**
      * Read-only state flow exposing the currently selected profile.
      */
-    val currentProfile: StateFlow<Profile?> = _currentProfile.asStateFlow()
+    val currentProfile: StateFlow<ProfileEntity?> = _currentProfile.asStateFlow()
 
     /**
      * Mutable state that holds error messages to be displayed to the user.
@@ -96,13 +96,12 @@ class ProfileManager(
         // Observe profiles from the repository
         managerScope.launch {
             profileRepository.getAllProfiles().collectLatest { profileEntities ->
-                val profileList = profileEntities.map { it.toProfile() }
-                _profiles.value = profileList
+                _profiles.value = profileEntities
 
                 // Ensure we have a valid current profile
                 if (_currentProfileId.value == null || !profileExists(_currentProfileId.value!!)) {
-                    _currentProfileId.value = profileList.firstOrNull { it.name == "Default" }?.id
-                        ?: profileList.firstOrNull()?.id
+                    _currentProfileId.value = _profiles.value.firstOrNull { it.name == "Default" }?.id
+                        ?: _profiles.value.firstOrNull()?.id
 
                     // Save the current profile ID
                     sharedPreferences.edit()
@@ -113,7 +112,7 @@ class ProfileManager(
                 updateCurrentProfile()
 
                 // Create default profile if no profiles exist
-                if (profileList.isEmpty()) {
+                if (_profiles.value.isEmpty()) {
                     createAndAddDefaultProfile()
                 }
             }
@@ -124,7 +123,8 @@ class ProfileManager(
      * Creates a new default profile with empty app list.
      */
     private suspend fun createAndAddDefaultProfile() {
-        val defaultProfile = Profile(
+        val defaultProfile = ProfileEntity(
+            id = java.util.UUID.randomUUID().toString(),
             name = "Default",
             appPackageNames = emptyList(),
             icon = "baseline_block_24"
@@ -155,11 +155,11 @@ class ProfileManager(
      *
      * @param newProfile The profile to add
      */
-    fun addProfile(newProfile: Profile) {
+    fun addProfile(newProfile: ProfileEntity) {
         _isLoading.value = true
         managerScope.launch {
             try {
-                profileRepository.saveProfile(newProfile.toEntity())
+                profileRepository.saveProfile(newProfile)
                 _currentProfileId.value = newProfile.id
 
                 // Save the current profile ID in SharedPreferences
@@ -198,7 +198,7 @@ class ProfileManager(
         )
 
         managerScope.launch {
-            profileRepository.saveProfile(updatedProfile.toEntity())
+            profileRepository.saveProfile(updatedProfile)
         }
     }
 
@@ -238,7 +238,7 @@ class ProfileManager(
 
         managerScope.launch {
             // Delete from database
-            profileRepository.deleteProfile(profileToDelete.toEntity())
+            profileRepository.deleteProfile(profileToDelete)
 
             // If the deleted profile was current, select another profile
             if (_currentProfileId.value == id) {
