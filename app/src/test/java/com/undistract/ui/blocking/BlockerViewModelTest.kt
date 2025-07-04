@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.undistract.UndistractApp
 import com.undistract.data.local.UndistractDatabase
-import com.undistract.data.models.Profile
+import com.undistract.data.entities.ProfileEntity
 import com.undistract.managers.AppBlockerManager
 import com.undistract.managers.ProfileManager
 import com.undistract.services.AppBlockerAccessibilityService
@@ -55,7 +55,7 @@ class BlockerViewModelTest {
     private val mockAppBlocker = mockk<AppBlockerManager>(relaxed = true)
     private val mockProfileManager = mockk<ProfileManager>(relaxed = true)
     private val blockingStateFlow = MutableStateFlow(false)
-    private val profileStateFlow = MutableStateFlow<Profile?>(null)
+    private val profileStateFlow = MutableStateFlow<ProfileEntity?>(null)
 
     @Before
     fun setUp() {
@@ -160,7 +160,7 @@ class BlockerViewModelTest {
     @Test
     fun `scanTag with valid tag prefix should trigger blocking toggle`() {
         // Arrange
-        val profile = Profile(name = "Test", appPackageNames = listOf("com.example"))
+        val profile = ProfileEntity(id = "profile-1", name = "Test", appPackageNames = listOf("com.example"))
         profileStateFlow.value = profile
         blockingStateFlow.value = false  // Starting with blocking disabled
 
@@ -190,7 +190,7 @@ class BlockerViewModelTest {
     fun `toggleBlocking should start BlockerService when enabling blocking`() {
         // Arrange
         val appPackages = listOf("com.example.app1", "com.example.app2")
-        val profile = Profile(name = "Test", appPackageNames = appPackages)
+        val profile = ProfileEntity(id = "profile-1", name = "Test", appPackageNames = appPackages)
         profileStateFlow.value = profile
         blockingStateFlow.value = false // Currently not blocking
 
@@ -207,7 +207,7 @@ class BlockerViewModelTest {
     fun `toggleBlocking should stop BlockerService when disabling blocking`() {
         // Arrange
         val appPackages = listOf("com.example.app1", "com.example.app2")
-        val profile = Profile(name = "Test", appPackageNames = appPackages)
+        val profile = ProfileEntity(id = "profile-1", name = "Test", appPackageNames = appPackages)
         profileStateFlow.value = profile
         blockingStateFlow.value = true // Currently blocking
 
@@ -223,7 +223,7 @@ class BlockerViewModelTest {
     fun `toggleBlocking should check accessibility service when enabling blocking`() {
         // Arrange
         val appPackages = listOf("com.example.app1", "com.example.app2")
-        val profile = Profile(name = "Test", appPackageNames = appPackages)
+        val profile = ProfileEntity(id = "profile-1", name = "Test", appPackageNames = appPackages)
         profileStateFlow.value = profile
         blockingStateFlow.value = false // Currently not blocking
 
