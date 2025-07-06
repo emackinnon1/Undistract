@@ -242,19 +242,24 @@ class ProfileManager(
         val profileToDelete = _profiles.value.find { it.id == id } ?: return
 
         managerScope.launch {
-            // Delete from database
-            profileRepository.deleteProfile(profileToDelete)
+            try {
+                // Delete from database
+                profileRepository.deleteProfile(profileToDelete)
 
-            // If the deleted profile was current, select another profile
-            if (_currentProfileId.value == id) {
-                val newCurrentId = _profiles.value.firstOrNull { it.id != id }?.id
+                // If the deleted profile was current, select another profile
+                if (_currentProfileId.value == id) {
+                    val newCurrentId = _profiles.value.firstOrNull { it.id != id }?.id
 
-                _currentProfileId.value = newCurrentId
+                    _currentProfileId.value = newCurrentId
 
-                // Save the current profile ID in SharedPreferences
-                sharedPreferences.edit()
-                    .putString("currentProfileId", newCurrentId)
-                    .apply()
+                    // Save the current profile ID in SharedPreferences
+                    sharedPreferences.edit()
+                        .putString("currentProfileId", newCurrentId)
+                        .apply()
+                }
+            } catch (e: Exception) {
+                Log.e("ProfileManager", "Error deleting profile", e)
+                _errorMessage.value = "Failed to delete profile: ${e.localizedMessage}"
             }
         }
     }
