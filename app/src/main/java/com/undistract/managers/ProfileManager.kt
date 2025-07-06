@@ -198,7 +198,12 @@ class ProfileManager(
         )
 
         managerScope.launch {
-            profileRepository.saveProfile(updatedProfile)
+            try {
+                profileRepository.saveProfile(updatedProfile)
+            } catch (e: Exception) {
+                Log.e("ProfileManager", "Error updating profile", e)
+                _errorMessage.value = "Failed to update profile: ${e.localizedMessage}"
+            }
         }
     }
 
