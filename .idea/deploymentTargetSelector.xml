@@ -4,7 +4,7 @@
     <selectionStates>
       <SelectionState runConfigName="Undistract">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-07-03T14:27:16.285085Z">
+        <DropdownSelection timestamp="2025-07-09T18:08:11.266961Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=R3CW907PF1E" />

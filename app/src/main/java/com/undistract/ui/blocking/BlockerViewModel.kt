@@ -90,6 +90,11 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
     /** Public immutable flow for scan tag alert visibility */
     val showScanTagAlert = _showScanTagAlert.asStateFlow()
 
+    /** Indicates whether no tags exist in the system */
+    private val _noTagsExistAlert = MutableStateFlow(false)
+    /** Public immutable flow for no tags exist alert visibility */
+    val noTagsExistAlert: StateFlow<Boolean> = _noTagsExistAlert
+
     // External state flows
     /** Current blocking status from the app blocker */
     val isBlocking = appBlocker.isBlocking
@@ -149,8 +154,15 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             dismissScanTagAlert()
 
+            // First check if it's an Undistract tag format
             if (id.startsWith(VALID_TAG_PREFIX)) {
-                toggleBlocking()
+                // Then verify this specific tag ID exists in our database
+                val tagExists = _writtenTags.value.any { it.id == id }
+                if (tagExists) {
+                    toggleBlocking()
+                } else {
+                    showWrongTagAlert() // Tag format is valid but not in our database
+                }
             } else {
                 showWrongTagAlert()
             }
@@ -233,9 +245,13 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
      * Shows the scan tag alert dialog and hides other dialogs.
      */
     fun showScanTagAlert() {
-        _showWrongTagAlert.value = false
-        _showCreateTagAlert.value = false
-        _showScanTagAlert.value = true
+        if (_writtenTags.value.isNotEmpty()) {
+            _showWrongTagAlert.value = false
+            _showCreateTagAlert.value = false
+            _showScanTagAlert.value = true
+        } else {
+            _noTagsExistAlert.value = true
+        }
     }
 
     /**
@@ -316,5 +332,12 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
      */
     fun dismissNfcWriteSuccessAlert() {
         _nfcWriteSuccess.value = false
+    }
+
+    /**
+     * Dismisses the alert shown when no tags exist.
+     */
+    fun dismissNoTagsExistAlert() {
+        _noTagsExistAlert.value = false
     }
 }
