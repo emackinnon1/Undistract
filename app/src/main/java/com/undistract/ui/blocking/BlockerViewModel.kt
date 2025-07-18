@@ -1,7 +1,6 @@
 package com.undistract.ui.blocking
 
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
@@ -17,6 +16,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.VisibleForTesting
 
 
 /**
@@ -31,22 +31,21 @@ import kotlinx.coroutines.launch
  * @property application The Android application context
  */
 class BlockerViewModel(application: Application) : AndroidViewModel(application) {
+    @VisibleForTesting
+    fun setWrittenTagsForTesting(tags: List<NfcTagEntity>) {
+        _writtenTags.value = tags
+    }
+
     /**
      * Constants and utility methods for the BlockerViewModel.
      */
     companion object {
         /** Tag for logging purposes */
         private const val TAG = "BlockerViewModel"
-        /** Name of SharedPreferences file for storing NFC tag data */
-        private const val PREFS_NAME = "nfc_tags"
-        /** Key for storing NFC tags in SharedPreferences */
-        private const val TAGS_KEY = "nfc_tags"
         /** Prefix that identifies valid Undistract NFC tags */
         private const val VALID_TAG_PREFIX = "UNDISTRACT"
     }
 
-    /** SharedPreferences for persisting NFC tag data */
-    private val prefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     /** Reference to the application's app blocker component */
     private val appBlocker = UndistractApp.appBlocker
     /** Reference to the application's profile manager component */

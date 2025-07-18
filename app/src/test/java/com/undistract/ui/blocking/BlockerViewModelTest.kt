@@ -11,7 +11,6 @@ import com.undistract.managers.AppBlockerManager
 import com.undistract.managers.ProfileManager
 import com.undistract.services.AppBlockerAccessibilityService
 import com.undistract.data.entities.NfcTagEntity
-import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -98,8 +97,8 @@ class BlockerViewModelTest {
         // Set the written tags directly to include our test tag
         val writtenTagsField = BlockerViewModel::class.java.getDeclaredField("_writtenTags")
         writtenTagsField.isAccessible = true
-        (writtenTagsField.get(viewModel) as MutableStateFlow).value = listOf(testTag)
-
+//        (writtenTagsField.get(viewModel) as MutableStateFlow<List<NfcTagEntity>>).value = listOf(testTag)
+        viewModel.setWrittenTagsForTesting(listOf(testTag))
         // Run any pending operations
         testDispatcher.scheduler.advanceUntilIdle()
     }
@@ -169,11 +168,16 @@ class BlockerViewModelTest {
     @Test
     fun `scanTag with valid tag prefix should trigger blocking toggle`() {
         // Arrange
-        val tagId = "UNDISTRACT-valid-tag"  // Use the same ID as in setUp
-        profileStateFlow.value = ProfileEntity(1, "Test Profile", emptyList())
+        val testTag = NfcTagEntity(id = "UNDISTRACT-valid-tag", payload = "profile_tag")
+
+        // Set a valid profile (this is what's missing)
+        profileStateFlow.value = ProfileEntity(id = "1", name = "Test Profile", appPackageNames = listOf("com.example.app"))
+
+        // Set up written tags with our test tag
+        viewModel.setWrittenTagsForTesting(listOf(testTag))
 
         // Act
-        viewModel.scanTag(tagId)
+        viewModel.scanTag(testTag.id)
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Assert
@@ -197,10 +201,10 @@ class BlockerViewModelTest {
     @Test
     fun `toggleBlocking should start BlockerService when enabling blocking`() {
         // Arrange - set a valid profile
-        profileStateFlow.value = ProfileEntity(1, "Test Profile", listOf("com.example.app"))
+        profileStateFlow.value = ProfileEntity("1", "Test Profile", listOf("com.example.app"))
 
         // Use reflection to call the private toggleBlocking method
-        val toggleBlockingMethod = BlockerViewModel::class.java.getDeclaredField("toggleBlocking")
+        val toggleBlockingMethod = BlockerViewModel::class.java.getDeclaredMethod("toggleBlocking")
         toggleBlockingMethod.isAccessible = true
 
         // Act
@@ -215,13 +219,16 @@ class BlockerViewModelTest {
     fun `toggleBlocking should stop BlockerService when disabling blocking`() {
         // Arrange
         val appPackages = listOf("com.example.app1", "com.example.app2")
-        val profile = ProfileEntity(id = "profile-1", name = "Test", appPackageNames = appPackages)
-        profileStateFlow.value = profile
+        profileStateFlow.value = ProfileEntity(id = "1", name = "Test Profile", appPackageNames = appPackages)
         blockingStateFlow.value = true // Currently blocking
 
+        // Use reflection to call the private toggleBlocking method
+        val toggleBlockingMethod = BlockerViewModel::class.java.getDeclaredMethod("toggleBlocking")
+        toggleBlockingMethod.isAccessible = true
+
         // Act
-        viewModel.scanTag("UNDISTRACT-valid-tag")
-        testDispatcher.scheduler.advanceUntilIdle()  // Wait for coroutine to complete
+        toggleBlockingMethod.invoke(viewModel)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Assert
         io.mockk.verify { mockAppBlocker.setBlockingState(false) }
@@ -231,13 +238,16 @@ class BlockerViewModelTest {
     fun `toggleBlocking should check accessibility service when enabling blocking`() {
         // Arrange
         val appPackages = listOf("com.example.app1", "com.example.app2")
-        val profile = ProfileEntity(id = "profile-1", name = "Test", appPackageNames = appPackages)
-        profileStateFlow.value = profile
-        blockingStateFlow.value = false // Currently not blocking
+        profileStateFlow.value = ProfileEntity(id = "1", name = "Test Profile", appPackageNames = appPackages)
+        blockingStateFlow.value = false // Not currently blocking
+
+        // Use reflection to call the private toggleBlocking method
+        val toggleBlockingMethod = BlockerViewModel::class.java.getDeclaredMethod("toggleBlocking")
+        toggleBlockingMethod.isAccessible = true
 
         // Act
-        viewModel.scanTag("UNDISTRACT-valid-tag")
-        testDispatcher.scheduler.advanceUntilIdle()  // Wait for coroutine to complete
+        toggleBlockingMethod.invoke(viewModel)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Assert
         io.mockk.verify { AppBlockerAccessibilityService.ensureAccessibilityServiceEnabled(any()) }
@@ -260,6 +270,12 @@ class BlockerViewModelTest {
 
     @Test
     fun `showScanTagAlert should set showScanTagAlert state to true`() {
+        // Arrange
+        val testTag = NfcTagEntity(id = "UNDISTRACT-valid-tag", payload = "profile_tag")
+        val writtenTagsField = BlockerViewModel::class.java.getDeclaredField("_writtenTags")
+        writtenTagsField.isAccessible = true
+        viewModel.setWrittenTagsForTesting(listOf(testTag))
+
         // Act
         viewModel.showScanTagAlert()
         testDispatcher.scheduler.advanceUntilIdle()
@@ -276,7 +292,7 @@ class BlockerViewModelTest {
         // Arrange - set the state to true first
         val scanTagAlertField = BlockerViewModel::class.java.getDeclaredField("_showScanTagAlert")
         scanTagAlertField.isAccessible = true
-        (scanTagAlertField.get(viewModel) as MutableStateFlow).value = true
+        (scanTagAlertField.get(viewModel) as MutableStateFlow<Boolean>).value = true
 
         // Act
         viewModel.dismissScanTagAlert()
