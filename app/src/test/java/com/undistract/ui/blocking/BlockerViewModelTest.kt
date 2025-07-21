@@ -97,7 +97,7 @@ class BlockerViewModelTest {
         // Set the written tags directly to include our test tag
         val writtenTagsField = BlockerViewModel::class.java.getDeclaredField("_writtenTags")
         writtenTagsField.isAccessible = true
-//        (writtenTagsField.get(viewModel) as MutableStateFlow<List<NfcTagEntity>>).value = listOf(testTag)
+
         viewModel.setWrittenTagsForTesting(listOf(testTag))
         // Run any pending operations
         testDispatcher.scheduler.advanceUntilIdle()
