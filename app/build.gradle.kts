@@ -88,7 +88,6 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.mockk.android)
     testImplementation(libs.robolectric)
-    testImplementation(libs.ui.test.junit4)
 
 
     // Android test implementation dependencies
@@ -104,5 +103,4 @@ dependencies {
     // Debug implementation dependencies
     debugImplementation(libs.androidx.ui.test.manifest)
     debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.ui.test.manifest)
 }
