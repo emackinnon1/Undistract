@@ -464,7 +464,6 @@ class ProfilesPickerTest {
 
         every { fakeManager.profiles } returns MutableStateFlow(testProfiles)
         every { fakeManager.currentProfileId } returns currentProfileIdFlow
-        every { fakeManager.currentProfileId } returns MutableStateFlow<String?>(testProfiles.first().id)
         every { fakeManager.isLoading } returns MutableStateFlow(false)
         every { fakeManager.errorMessage } returns MutableStateFlow<String?>(null)
         every { fakeManager.setCurrentProfile(any()) } answers {
