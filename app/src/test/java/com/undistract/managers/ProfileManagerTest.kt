@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 import android.graphics.drawable.Drawable
 import com.undistract.UndistractApp
 import com.undistract.data.models.AppInfo
+import com.undistract.data.repositories.ProfileRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -22,6 +24,7 @@ import org.robolectric.annotation.Config
 class ProfileManagerTest {
 
     private lateinit var profileManager: ProfileManager
+    private lateinit var mockProfileRepository: ProfileRepository
 
     @Before
     fun setup() {
@@ -29,6 +32,7 @@ class ProfileManagerTest {
         val mockContext = Mockito.mock(Context::class.java)
         val mockSharedPreferences = Mockito.mock(SharedPreferences::class.java)
         val mockEditor = Mockito.mock(SharedPreferences.Editor::class.java)
+        mockProfileRepository = Mockito.mock(ProfileRepository::class.java)
 
         // Configure mock behavior
         Mockito.`when`(mockContext.getSharedPreferences(Mockito.anyString(), Mockito.anyInt()))
@@ -36,8 +40,10 @@ class ProfileManagerTest {
         Mockito.`when`(mockSharedPreferences.edit()).thenReturn(mockEditor)
         Mockito.`when`(mockEditor.putString(Mockito.anyString(), Mockito.anyString())).thenReturn(mockEditor)
         Mockito.`when`(mockEditor.putBoolean(Mockito.anyString(), Mockito.anyBoolean())).thenReturn(mockEditor)
+        Mockito.`when`(mockProfileRepository.getAllProfiles()).thenReturn(MutableStateFlow(emptyList()))
 
-        profileManager = ProfileManager(mockContext)
+
+        profileManager = ProfileManager(mockContext, mockProfileRepository)
     }
 
     @Test

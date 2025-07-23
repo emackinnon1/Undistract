@@ -73,6 +73,7 @@ fun BlockerScreen(
     val showScanTagAlert by viewModel.showScanTagAlert.collectAsState(initial = false)
     val writtenTags by viewModel.writtenTags.collectAsState()
     val showTagsList = remember { mutableStateOf(false) }
+    val showNoTagsExistAlert by viewModel.noTagsExistAlert.collectAsState(initial = false)
 
     val profileManager = UndistractApp.profileManager
     val errorMessage by profileManager.errorMessage.collectAsState()
@@ -233,6 +234,14 @@ fun BlockerScreen(
             else
                 "Please hold your Undistract NFC tag against your device to block distractions",
             onDismiss = { viewModel.dismissScanTagAlert() }
+        )
+    }
+
+    if (showNoTagsExistAlert) {
+        AlertDialogWithMessage(
+            title = "No Tags Available",
+            text = "You need to create at least one NFC tag before you can scan.",
+            onConfirm = { viewModel.dismissNoTagsExistAlert() }
         )
     }
 

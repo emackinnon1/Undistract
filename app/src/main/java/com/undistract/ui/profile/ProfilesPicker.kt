@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.undistract.R
+import com.undistract.data.entities.ProfileEntity
 import com.undistract.data.models.Profile
 import com.undistract.data.models.AppInfo
 import com.undistract.managers.ProfileManager
@@ -62,79 +64,119 @@ fun ProfilesPicker(
     val currentProfileId by profileManager.currentProfileId.collectAsState()
 
     var showAddProfileView by remember { mutableStateOf(false) }
-    var editingProfile by remember { mutableStateOf<Profile?>(null) }
+    var editingProfile by remember { mutableStateOf<ProfileEntity?>(null) }
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .fillMaxHeight()
-            .background(MaterialTheme.colorScheme.background) // ProfileSectionBackground color
-    ) {
-        Text(
-            text = "Profiles",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(top = 16.dp)
-        )
+    val isLoading by profileManager.isLoading.collectAsState()
+    val errorMessage by profileManager.errorMessage.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 90.dp),
-            contentPadding = PaddingValues(10.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.weight(3f).fillMaxHeight()
-        ) {
-            items(profiles) { profile ->
-                ProfileCell(
-                    profile = profile,
-                    isSelected = profile.id == currentProfileId,
-                    onClick = { profileManager.setCurrentProfile(profile.id) },
-                    onLongClick = { editingProfile = profile }
-                )
-            }
 
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            snackbarHostState.showSnackbar(
+                message = it,
+                duration = SnackbarDuration.Short
+            )
+            profileManager.clearErrorMessage()
         }
+    }
 
-        OutlinedButton(
-            onClick = { showAddProfileView = true },
+
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            border = BorderStroke(
-                width = 2.dp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-            ),
-            shape = RoundedCornerShape(8.dp),
-            contentPadding = PaddingValues(vertical = 12.dp)
+                .fillMaxHeight()
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
+            Text(
+                text = "Profiles",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 16.dp)
+            )
+
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 90.dp),
+                contentPadding = PaddingValues(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.weight(3f).fillMaxHeight()
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.baseline_add_24),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Add New Profile",
-                    style = MaterialTheme.typography.bodyLarge
+                items(profiles) { profile ->
+                    ProfileCell(
+                        profile = profile,
+                        isSelected = profile.id == currentProfileId,
+                        onClick = { profileManager.setCurrentProfile(profile.id) },
+                        onLongClick = { editingProfile = profile }
+                    )
+                }
+
+            }
+
+            OutlinedButton(
+                onClick = { showAddProfileView = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                border = BorderStroke(
+                    width = 2.dp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                ),
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(vertical = 12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_add_24),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Add New Profile",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+
+            Text(
+                text = "Long press on a profile to edit or delete it.",
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp) // Adds bottom spacing between the helper text and the container's edge to improve visual separation and readability
+            )
+
+            // Add this right after the Text explaining "Long press on a profile..."
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+        }
+
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.4f))
+                    .pointerInput(Unit) { /* Consume all touch events */ },
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.testTag("loadingIndicator")
                 )
             }
         }
-
-        Text(
-            text = "Long press on a profile to edit or delete it.",
-            fontSize = 10.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp) // Adds bottom spacing between the helper text and the container's edge to improve visual separation and readability
-        )
     }
 
     // Add Profile Sheet
@@ -142,7 +184,8 @@ fun ProfilesPicker(
         ProfileFormDialog(
             onDismiss = { showAddProfileView = false },
             onSave = { name, icon, apps ->
-                val newProfile = Profile(
+                val newProfile = ProfileEntity(
+                    id = java.util.UUID.randomUUID().toString(),
                     name = name,
                     appPackageNames = apps,
                     icon = icon
@@ -187,7 +230,7 @@ fun ProfilesPicker(
  */
 @Composable
 fun ProfileCell(
-    profile: Profile,
+    profile: ProfileEntity,
     isSelected: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit
@@ -321,7 +364,7 @@ fun ProfileCellBase(
  */
 @Composable
 fun ProfileFormDialog(
-    profile: Profile? = null,
+    profile: ProfileEntity? = null,
     onDismiss: () -> Unit,
     onSave: (name: String, icon: String, apps: List<String>) -> Unit,
     onDelete: ((String) -> Unit)? = null
@@ -412,7 +455,7 @@ fun ProfileFormDialog(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (isEditMode && profile.isDefault == false) {
+                    if (isEditMode) {
                         TextButton(
                             onClick = {
                                 profile.let {

@@ -1,7 +1,6 @@
 package com.undistract.ui.blocking
 
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
@@ -17,6 +16,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.VisibleForTesting
 
 
 /**
@@ -31,22 +31,21 @@ import kotlinx.coroutines.launch
  * @property application The Android application context
  */
 class BlockerViewModel(application: Application) : AndroidViewModel(application) {
+    @VisibleForTesting
+    fun setWrittenTagsForTesting(tags: List<NfcTagEntity>) {
+        _writtenTags.value = tags
+    }
+
     /**
      * Constants and utility methods for the BlockerViewModel.
      */
     companion object {
         /** Tag for logging purposes */
         private const val TAG = "BlockerViewModel"
-        /** Name of SharedPreferences file for storing NFC tag data */
-        private const val PREFS_NAME = "nfc_tags"
-        /** Key for storing NFC tags in SharedPreferences */
-        private const val TAGS_KEY = "nfc_tags"
         /** Prefix that identifies valid Undistract NFC tags */
         private const val VALID_TAG_PREFIX = "UNDISTRACT"
     }
 
-    /** SharedPreferences for persisting NFC tag data */
-    private val prefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     /** Reference to the application's app blocker component */
     private val appBlocker = UndistractApp.appBlocker
     /** Reference to the application's profile manager component */
@@ -89,6 +88,11 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
     private val _showScanTagAlert = MutableStateFlow(false)
     /** Public immutable flow for scan tag alert visibility */
     val showScanTagAlert = _showScanTagAlert.asStateFlow()
+
+    /** Indicates whether no tags exist in the system */
+    private val _noTagsExistAlert = MutableStateFlow(false)
+    /** Public immutable flow for no tags exist alert visibility */
+    val noTagsExistAlert: StateFlow<Boolean> = _noTagsExistAlert
 
     // External state flows
     /** Current blocking status from the app blocker */
@@ -149,8 +153,15 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             dismissScanTagAlert()
 
+            // First check if it's an Undistract tag format
             if (id.startsWith(VALID_TAG_PREFIX)) {
-                toggleBlocking()
+                // Then verify this specific tag ID exists in our database
+                val tagExists = _writtenTags.value.any { it.id == id }
+                if (tagExists) {
+                    toggleBlocking()
+                } else {
+                    showWrongTagAlert() // Tag format is valid but not in our database
+                }
             } else {
                 showWrongTagAlert()
             }
@@ -233,9 +244,13 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
      * Shows the scan tag alert dialog and hides other dialogs.
      */
     fun showScanTagAlert() {
-        _showWrongTagAlert.value = false
-        _showCreateTagAlert.value = false
-        _showScanTagAlert.value = true
+        if (_writtenTags.value.isNotEmpty()) {
+            _showWrongTagAlert.value = false
+            _showCreateTagAlert.value = false
+            _showScanTagAlert.value = true
+        } else {
+            _noTagsExistAlert.value = true
+        }
     }
 
     /**
@@ -316,5 +331,12 @@ class BlockerViewModel(application: Application) : AndroidViewModel(application)
      */
     fun dismissNfcWriteSuccessAlert() {
         _nfcWriteSuccess.value = false
+    }
+
+    /**
+     * Dismisses the alert shown when no tags exist.
+     */
+    fun dismissNoTagsExistAlert() {
+        _noTagsExistAlert.value = false
     }
 }
